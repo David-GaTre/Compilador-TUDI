@@ -1,5 +1,12 @@
 # TUDI
 
+## Avance 1
+
+Estado incompleto, con errores por encontrar y arreglar en reglas de la gramática. Al parecer son conflictos shift/reduce. Y también tenemos tokens que aún no están siendo utilizados. Y hace falta agregar algunos statements como el return, letreros, entre otros. 
+
+1. Funciones Start y Update marca error en el token donde se menciona el nombre de la funcion.
+2. Declaracion de variables múltiples causa problemas.
+
 ## Objetivo
 
 ***TUDI*** es un lenguaje de programación para desarrollar videojuegos, o prototipos de videojuegos, con una vista 2D. 
