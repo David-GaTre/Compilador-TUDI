@@ -1,0 +1,14 @@
+game test;
+
+declare {
+    int x;
+}
+
+func DoSomethingA : int () {
+}
+
+func Start : void () {
+}
+
+func Update : void () {
+}

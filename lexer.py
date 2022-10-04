@@ -2,12 +2,12 @@ import ply.lex as lex
 import ply.yacc as yacc
 
 reserved = {
-    'start' : 'START',
-    'update': 'UPDATE',
+    'Start' : 'START',
+    'Update': 'UPDATE',
     'game': 'GAME',
     'int': 'INT',
     'float' : 'FLOAT',
-    'boolean': 'BOOLEAN',
+    'bool': 'BOOLEAN',
     'char': 'CHAR',
     'void': 'VOID',
     'canvas': 'CANVAS',
@@ -18,12 +18,15 @@ reserved = {
     'if': 'IF',
     'else': 'ELSE',
     'for': 'FOR',
-    'while': 'WHILE'
+    'while': 'WHILE',
+    'y': 'AND',
+    'o': 'OR',
+    'no': 'NOT'
 }
 
 tokens = ['SEMICOLON', 'COLON', 'COMMA', 'ASSIGN', 'LCURLYB', 'RCURLYB', 'LPAREN',
     'RPAREN', 'LBRACKET', 'RBRACKET', 'PLUS', 'MINUS', 'DIVISION', 'TIMES','GTRTHAN', 
-    'GTREQLTHAN', 'LESSTHAN', 'LESSEQLTHAN', 'EQUALS', 'NOTEQUALS','AND', 'OR', 'NOT',
+    'GTREQLTHAN', 'LESSTHAN', 'LESSEQLTHAN', 'EQUALS', 'NOTEQUALS',
     'INT_LITERAL', 'FLOAT_LITERAL', 'BOOL_LITERAL', 'STRING_LITERAL', 'ID'] + list(reserved.values())
 
 t_SEMICOLON = r'\;'
@@ -46,9 +49,6 @@ t_LESSTHAN = r'\<'
 t_LESSEQLTHAN = r'\<\='
 t_EQUALS = r'\=\='
 t_NOTEQUALS = r'\!\='
-t_AND = r'\y'
-t_OR = r'\o'
-t_NOT = r'\n\o'
 t_INT_LITERAL = r'[0-9]+'
 t_FLOAT_LITERAL = r'[0-9]+(\. [0-9]+)'
 t_BOOL_LITERAL = r'(true) | (false)'
