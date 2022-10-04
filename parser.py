@@ -1,5 +1,5 @@
 from lexer import Lexer
-
+import ply.yacc as yacc
 
 def p_game(p):
     ''''''
@@ -75,3 +75,16 @@ def p_term(p):
 
 def p_fact(p):
     '''  '''
+
+def p_id_exp(p):
+    ''''''
+
+parser = yacc.yacc()
+
+file_name = input("Nombre de archivo: ")
+f = open(file_name, 'r')
+data = f.read()
+f.close()
+
+if parser.parse(data) == "Aceptado":
+    print("Todo es valido")
