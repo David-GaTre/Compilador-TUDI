@@ -2,13 +2,88 @@ game test;
 
 declare {
     int x;
+    float a, b, c;
+    bool cond;
+    char _char_;
+    sprite player;
+    int[5] vector;
+    bool[5,5] matrix;
 }
 
-func DoSomethingA : int () {
+func DoSomethingA : int () {}
+
+func DoSomethingB : sprite[1,1] (int pos_x, int pos_y) {
+    declare {
+        int up;
+    }
+}
+
+func DoSomethingC : void (bool cond) {
+    declare {
+        int up;
+    }
+    
+    cond = false;
 }
 
 func Start : void () {
+    x = 1;
+    a = 0.1;
+    b = 1.0;
+    cond = false;
+    vector[1] = 5;
+    matrix[1+1 / 2 ,1 - 1] = true;
 }
 
 func Update : void () {
+    declare {
+        int up;
+    }
+
+    up = DoSomethingB() + 1 - x * vector[1] / (matrix[1,1] > 2 y b < 0.2);
+
+    for (x = 1; x < 9; x = x + 1) {
+        if (x == 2 o x == 3) {
+            DoSomethingC(false);
+        }
+    }
+
+    x = 1;
+    while (x < 3 y x > 0) {
+        x = x + 1;
+        if (matrix[1,1] == false) {
+        cond = true;
+        } else {
+            cond = false;
+        }
+    }
+
+    if (matrix[1,1] == false) {
+        cond = true;
+    }
+
+    if (matrix[1,1] == false) {
+        cond = true;
+    } else {
+        cond = false;
+    }
+
+    if (matrix[1,1] == false) {
+        cond = true;
+    } else if (vector[0] != 2) {
+        cond = false;
+    }
+
+    if (matrix[1,1] == false) {
+        cond = true;
+        if (matrix[1,1] == false) {
+            cond = true;
+        } else {
+            cond = false;
+        }
+    } else if (vector[0] != 2) {
+        cond = false;
+    } else if (vector[0] != 2) {
+        cond = false;
+    } 
 }
