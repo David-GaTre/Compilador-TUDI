@@ -25,7 +25,7 @@ def p_game_update(p):
 def p_block_vars(p):
     '''block_vars : DECLARE '{' declare_vars '}' '''
     
-def p_declare_var_prima(p):
+def p_declare_vars(p):
     '''declare_vars : declare_var declare_vars
                     | empty'''
 
