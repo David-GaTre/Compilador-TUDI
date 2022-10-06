@@ -50,8 +50,8 @@ t_REL_OP = r'<|<=|==|>|>=|!='
 t_ignore  = ' \t'
 
 def t_BOOL_LITERAL(t):
-     r'(True)|(False)'
-     t.value = bool(t.value == 'True')
+     r'(true)|(false)'
+     t.value = bool(t.value == 'true')
      return t
 
 def t_ID(t):
