@@ -1,4 +1,5 @@
 game test;
+canvas = 10, 10;
 
 declare {
     int x;
@@ -15,7 +16,10 @@ func DoSomethingA : int () {}
 func DoSomethingB : sprite[1,1] (int pos_x, int pos_y) {
     declare {
         int up;
+        sprite[1,1] s;
     }
+    s.moverse();
+    return s[1,1];
 }
 
 func DoSomethingC : void (bool cond) {

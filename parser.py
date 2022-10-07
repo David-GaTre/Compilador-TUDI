@@ -3,7 +3,7 @@ from lexer import Lexer, tokens, literals
 import ply.yacc as yacc
 
 def p_game(p):
-    '''game : GAME ID ';' game_vars game_funcs'''
+    '''game : GAME ID ';' CANVAS ASSIGN_OP INT_LITERAL ',' INT_LITERAL ';' game_vars game_funcs'''
     p[0] = "Aceptado"
 
 def p_game_vars(p):
@@ -70,14 +70,31 @@ def p_statement(p):
                  | for_loop
                  | while_loop
                  | conditional
-                 | assignment ';' '''
+                 | assignment ';' 
+                 | io_func ';' 
+                 | return ';' 
+                 | call_method ';' '''
 
 def p_statement_prima(p):
     '''statement_prima : statement statement_prima
                        | empty'''
 
+def p_return(p):
+    '''return : RETURN god_exp'''
+
+def p_io_func(p):
+    '''io_func : PRINT '(' io_func_prima ')' 
+               | READ  '(' io_func_prima ')' '''
+
+def p_io_func_prima(p):
+    '''io_func_prima : STRING_LITERAL
+                     | empty'''
+
 def p_call_func(p):
     '''call_func : ID '(' list_args ')' '''
+
+def p_call_method(p):
+    '''call_method : id_exp '.' ID '(' list_args ')' '''
 
 def p_list_args(p):
     '''list_args : god_exp list_args_prima
@@ -157,7 +174,7 @@ def p_fact(p):
             | INT_LITERAL
             | FLOAT_LITERAL
             | BOOL_LITERAL
-            | call_func'''
+            | call_func '''
 
 def p_id_exp(p):
     '''id_exp : ID
