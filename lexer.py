@@ -14,6 +14,8 @@ reserved = {
     'func': 'FUNC',
     'return': 'RETURN',
     'declare': 'DECLARE',
+    'print': 'PRINT',
+    'read': 'READ',
     'if': 'IF',
     'else': 'ELSE',
     'for': 'FOR',
@@ -32,12 +34,12 @@ tokens = [
 tokens = tokens + list(reserved.values())
 
 # Character literal tokens:
-# - COMMA, COLON, SEMICOLON,
+# - COMMA, COLON, SEMICOLON, DOT
 # - LEFT_PAREN, RIGHT_PAREN,
 # - LEFT_BRACKET, RIGHT_BRACKET,
 # - LEFT_CURLY, RIGHT_CURLY,
 # - PLUS, MINUS, TIMES, DIVIDE
-literals = [',', ':', ';',
+literals = [',', ':', ';', '.', 
             '(', ')',
             '[', ']',
             '{', '}',
