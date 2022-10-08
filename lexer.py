@@ -14,15 +14,18 @@ reserved = {
     'func': 'FUNC',
     'return': 'RETURN',
     'declare': 'DECLARE',
-    'print': 'PRINT',
-    'read': 'READ',
+    'Print': 'PRINT',
+    'Read': 'READ',
     'if': 'IF',
     'else': 'ELSE',
     'for': 'FOR',
     'while': 'WHILE',
     'y': 'AND',
     'o': 'OR',
-    'no': 'NOT'
+    'no': 'NOT',
+    'SetPosition': 'SETPOSITION',
+    'Translate': 'TRANSLATE',
+    'SetControllable': 'SETCONTROLLABLE',
 }
 
 tokens = [
