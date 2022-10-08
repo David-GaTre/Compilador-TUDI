@@ -71,7 +71,6 @@ def p_statement(p):
                  | while_loop
                  | conditional
                  | assignment ';' 
-                 | io_func ';' 
                  | return ';' 
                  | call_method ';' '''
 
@@ -90,11 +89,27 @@ def p_io_func_prima(p):
     '''io_func_prima : STRING_LITERAL
                      | empty'''
 
+def p_cast_func(p):
+    '''cast_func : INT cast_func_prima 
+                 | FLOAT cast_func_prima
+                 | BOOLEAN cast_func_prima'''
+
+def p_cast_func_prima(p):
+    '''cast_func_prima : '(' STRING_LITERAL ')'
+                       | '(' god_exp ')' '''
+
 def p_call_func(p):
-    '''call_func : ID '(' list_args ')' '''
+    '''call_func : ID '(' list_args ')'
+                 | io_func 
+                 | cast_func'''
 
 def p_call_method(p):
-    '''call_method : id_exp '.' ID '(' list_args ')' '''
+    '''call_method : id_exp '.' call_method_prima '(' list_args ')' '''
+
+def p_call_method_prima(p):
+    '''call_method_prima : SETPOSITION
+                         | TRANSLATE
+                         | SETCONTROLLABLE '''
 
 def p_list_args(p):
     '''list_args : god_exp list_args_prima

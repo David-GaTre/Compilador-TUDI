@@ -18,15 +18,24 @@ func DoSomethingB : sprite[1,1] (int pos_x, int pos_y) {
         int up;
         sprite[1,1] s;
     }
-    s.moverse();
+    s.SetPosition(0.0, 0.0);
+    s.Translate(5, 0 - 1);
+    s.SetControllable(True);
     return s[1,1];
 }
 
 func DoSomethingC : void (bool cond) {
     declare {
-        int up;
+        float up;
+        int down;
+        char[10] input;
     }
     
+    Print("Read regresa un arreglo de caracteres");
+    input = Read("Escribe un float");
+    up = float(input);
+    down = int("10");
+
     cond = false;
 }
 
