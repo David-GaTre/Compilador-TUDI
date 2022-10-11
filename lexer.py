@@ -1,5 +1,4 @@
 import ply.lex as lex
-import ply.yacc as yacc
 
 reserved = {
     'Start' : 'START',
@@ -15,50 +14,69 @@ reserved = {
     'func': 'FUNC',
     'return': 'RETURN',
     'declare': 'DECLARE',
+    'Print': 'PRINT',
+    'Read': 'READ',
     'if': 'IF',
     'else': 'ELSE',
     'for': 'FOR',
     'while': 'WHILE',
     'y': 'AND',
     'o': 'OR',
-    'no': 'NOT'
+    'no': 'NOT',
+    'SetPosition': 'SETPOSITION',
+    'Translate': 'TRANSLATE',
+    'SetControllable': 'SETCONTROLLABLE',
 }
 
-tokens = ['SEMICOLON', 'COLON', 'COMMA', 'ASSIGN', 'LCURLYB', 'RCURLYB', 'LPAREN',
-    'RPAREN', 'LBRACKET', 'RBRACKET', 'PLUS', 'MINUS', 'DIVISION', 'TIMES','GTRTHAN', 
-    'GTREQLTHAN', 'LESSTHAN', 'LESSEQLTHAN', 'EQUALS', 'NOTEQUALS',
-    'INT_LITERAL', 'FLOAT_LITERAL', 'BOOL_LITERAL', 'STRING_LITERAL', 'ID'] + list(reserved.values())
+tokens = [
+    'REL_OP',
+    'ASSIGN_OP',
+    'ID',
+    'INT_LITERAL', 'FLOAT_LITERAL', 'BOOL_LITERAL', 'STRING_LITERAL']
+    
+tokens = tokens + list(reserved.values())
 
-t_SEMICOLON = r'\;'
-t_COLON = r'\:'
-t_COMMA = r'\,'
-t_ASSIGN = r'\='
-t_LCURLYB = r'\{'
-t_RCURLYB = r'\}'
-t_LPAREN = r'\('
-t_RPAREN = r'\)'
-t_LBRACKET = r'\['
-t_RBRACKET = r'\]'
-t_PLUS = r'\+'
-t_MINUS = r'\-'
-t_DIVISION = r'\/'
-t_TIMES = r'\*'
-t_GTRTHAN = r'\>'
-t_GTREQLTHAN = r'\>\='
-t_LESSTHAN = r'\<'
-t_LESSEQLTHAN = r'\<\='
-t_EQUALS = r'\=\='
-t_NOTEQUALS = r'\!\='
-t_INT_LITERAL = r'[0-9]+'
-t_FLOAT_LITERAL = r'[0-9]+(\. [0-9]+)'
-t_BOOL_LITERAL = r'(true) | (false)'
-t_STRING_LITERAL = r'\"(\w+|\s)+\"' # for word and space chars
+# Character literal tokens:
+# - COMMA, COLON, SEMICOLON, DOT
+# - LEFT_PAREN, RIGHT_PAREN,
+# - LEFT_BRACKET, RIGHT_BRACKET,
+# - LEFT_CURLY, RIGHT_CURLY,
+# - PLUS, MINUS, TIMES, DIVIDE
+literals = [',', ':', ';', '.', 
+            '(', ')',
+            '[', ']',
+            '{', '}',
+            '+', '-', '*', '/']
+
+t_ASSIGN_OP = r'='
+t_REL_OP = r'<|<=|==|>|>=|!='
+
+# Ignore these chars (spaces and tabs)
 t_ignore  = ' \t'
+
+def t_BOOL_LITERAL(t):
+     r'(true)|(false)'
+     t.value = bool(t.value == 'true')
+     return t
 
 def t_ID(t):
      r'[a-zA-Z_][a-zA-Z_0-9]*'
      t.type = reserved.get(t.value,'ID')
      return t
+
+def t_STRING_LITERAL(t):
+    r'\"(\w|\s)+\"' # for word and space chars
+    return t
+
+def t_FLOAT_LITERAL(t):
+    r'[0-9]+\.[0-9]+'
+    t.value = float(t.value)
+    return t
+
+def t_INT_LITERAL(t):
+    r'[0-9]+'
+    t.value = int(t.value)
+    return t
 
 def t_newline(t):
     r'\n+'

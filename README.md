@@ -1,5 +1,12 @@
 # TUDI
 
+## Avance 2
+Se completó lo pendiente del avance 1, solucionando los errores de la gramática y los conflictos shift/reduce. Se cambió la escritura de los tokens en el parser para anotar los caracteres por su cuenta. Se agregaron tokens para llamadas a funciones y de métodos propios del lenguaje. Actualmente todos los tokens son utilizados a excepción del operador lógico NOT que queda pendiente para el siguiente avance. 
+
+Se creó el cuadro semántico de tipos, queda pendiente completar el cubo semántico para añadir las operandos.
+
+Queda pendiente también añadir los recursos semánticos básicos al código del lenguaje.
+
 ## Avance 1
 
 Estado incompleto, con errores por encontrar y arreglar en reglas de la gramática. Al parecer son conflictos shift/reduce. Y también tenemos tokens que aún no están siendo utilizados. Y hace falta agregar algunos statements como el return, letreros, entre otros. 
@@ -51,6 +58,11 @@ func Update : void () {
 |START|Start|Es la función inicial, la primera que se va a correr al iniciar el programa.|
 |UPDATE|Update|Es la función que se ejecuta durante cada frame del programa.|
 |GAME|game|Va a servir para guardar el título del juego desde el programa.|
+|PRINT|Print|Va a servir para mostrar output al usuario en la consola.|
+|READ|Read|Va a servir para recibir input del usuario.|
+|SETPOSITION|SetPosition|Va a servir para posicionar un sprite en el canvas, recibe dos float.|
+|TRANSLATE|Translate|Va a servir para mover a un sprite en dos dimensiones, recibe dos float.|
+|SETCONTROLLABLE|SetControllable|Va a servir para definir si un sprite es posible controlarlo con las teclas, recibe bool.|
 |INT|int|Inicia la declaración del tipo de dato entero.|
 |FLOAT|float|Inicia la declaración del tipo de dato float.|
 |BOOLEAN|bool|Inicia la declaración del tipo de dato booleano.|
@@ -93,3 +105,18 @@ func Update : void () {
 |BOOL_LITERAL|(true)\|(false)|Servirá para identificar un valor de verdadero o falso.|
 |STRING_LITERAL|\\"(\\w+\|\\s)+\\"|Servirá para identificar todo aquello que sea una palabra entre comillas.|
 |ID|[a-zA-Z_][a-zA-Z_0-9]*|Servirá para crear identificadores para las variables.|
+
+### Características de la semántica
+La función **Read** recibe un STRING_LITERAL o un id de un arreglo de caracteres, el STRING se utiliza para mostrar un prompt al solicitar input del usuario y el valor de retorno es un arreglo de chars del tamaño de lo leído del usuario.
+
+Esto se combina con las funciones de casteo para convertir un arreglo de caracteres o un STRING_LITERAL en un INT, FLOAT o BOOLEAN. Es decir, estas tres funciones de casteo, **type(arr)**, reciben un arreglo de caracteres y regresan un valor del tipo acorde. 
+
+Un valor de tipo de dato sprite se crea con un tamaño y color. Y cuenta con tres métodos principales, los cuáles son: 
+- **SetPosition**(float, float): se utiliza para colocar el sprite en el canvas en las coordenadas provistas.
+- **SetControllable**(boolean): un valor verdadero indica que el sprite será controlable con input del usuario, al usar las flechas del teclado.
+- **Translate**(float, float): Mueve el sprite hacía utilizando los componentes provistos de un vector 2D.
+
+También existe un objeto global canvas al que se le deben asignar sus dimensiones al principio del programa con un estatuto:
+- canvas=width, height;
+
+Se estará manejando una lógica numérica en la que 0 será el único valor para falso, mientras que cualquier otro valor numérico representará el valor para verdadero. Mientras tanto, el tipo de dato **bool** es una especie de subclase de int, en la que se manejan dos palabras claves para los valores de verdadero y falso (True y False). **True** tendrá básicamente un valor de 1, mientras que **False** tendrá un valor de 0.
