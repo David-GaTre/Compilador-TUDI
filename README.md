@@ -120,15 +120,3 @@ También existe un objeto global canvas al que se le deben asignar sus dimension
 - canvas=width, height;
 
 Se estará manejando una lógica numérica en la que 0 será el único valor para falso, mientras que cualquier otro valor numérico representará el valor para verdadero. Mientras tanto, el tipo de dato **bool** es una especie de subclase de int, en la que se manejan dos palabras claves para los valores de verdadero y falso (True y False). **True** tendrá básicamente un valor de 1, mientras que **False** tendrá un valor de 0.
-
-||int|float|char|bool|void|sprite|array 1-dim|array 2-dim|
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-|**int**|int|float|error|int|error|error|error|error|
-|**float**|float|float|error|float|error|error|error|error|
-|**char**|error|error|char|error|error|error|error|error|
-|**bool**|int|float|error|bool|error|error|error|error|
-|**void**|error|error|error|error|error|error|error|error|
-|**sprite**|error|error|error|error|error|error|error|error|
-|**array 1-dim**|error|error|error|error|error|error|error|error|
-|**array 2-dim**|error|error|error|error|error|error|error|error|
-
