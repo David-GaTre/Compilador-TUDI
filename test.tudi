@@ -75,6 +75,10 @@ func Update : void () {
         cond = true;
     }
 
+    if (x < 3 y x > 1 o 2 > x) {
+        cond = false;
+    }
+
     if (matrix[1,1] == false) {
         cond = true;
     } else {
