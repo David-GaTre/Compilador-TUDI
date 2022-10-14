@@ -1,14 +1,3 @@
-from ctypes.wintypes import FLOAT
-
-
-data_types = {
-    'int': 'int',
-    'float': 'float',
-    'char': 'char',
-    'bool': 'bool',
-    'arr1d': 'arr1d',
-}
-
 INT = 'int'
 FLOAT = 'float'
 CHAR = 'char'
@@ -153,4 +142,4 @@ class SemanticCube:
 
     def validate_operation(self, left_operand: str, right_operand: str, operator: str):
         expression = self.create_operation(left_operand, right_operand, operator)
-        return self.valid_ops.get(expression, "ERROR: Not valid operation")
+        return self.valid_expressions.get(expression, "ERROR: Not valid operation")
