@@ -137,9 +137,9 @@ class SemanticCube:
         '+,AA': ARR1D
     }
 
-    def create_operation(self, left_operand: str, right_operand: str, operator: str):
+    def create_expression(self, left_operand: str, right_operand: str, operator: str):
         return operator + ',' + left_operand + right_operand
 
-    def validate_operation(self, left_operand: str, right_operand: str, operator: str):
-        expression = self.create_operation(left_operand, right_operand, operator)
+    def validate_expression(self, left_operand: str, right_operand: str, operator: str):
+        expression = self.create_expression(left_operand, right_operand, operator)
         return self.valid_expressions.get(expression, "ERROR: Not valid operation")
