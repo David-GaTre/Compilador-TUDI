@@ -1,5 +1,10 @@
 import ply.lex as lex
 
+class Token:
+    def __init__(self, value, lineno):
+        self.value = value
+        self.lineno = lineno
+
 reserved = {
     'Start' : 'START',
     'Update': 'UPDATE',

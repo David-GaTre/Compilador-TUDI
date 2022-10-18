@@ -1,10 +1,27 @@
-from lexer import Lexer, tokens, literals
+from lexer import Lexer, tokens, literals, Token
+from dir_vars import FunctionsDirectory
 
 import ply.yacc as yacc
+
+func_dir = FunctionsDirectory()
+last_vars = {'scope': func_dir.GLOBAL_ENV, 'var_type': None}
 
 def p_game(p):
     '''game : GAME ID ';' CANVAS ASSIGN_OP INT_LITERAL ',' INT_LITERAL ';' game_vars game_funcs'''
     p[0] = "Aceptado"
+    print("Todo valido")
+
+    global func_dir
+    for func, func_items in func_dir.directory.items():
+        print('Scope:', func)
+        for func_item, values in func_items.items():
+            if func_item == 'table':
+                print('\t- Variables:')
+                for k, v  in values.table.items():
+                    print('\t---', k, v)
+            else:
+                print('\t-', func_item, ':', values)
+        print()
 
 def p_game_vars(p):
     '''game_vars : block_vars
@@ -24,41 +41,54 @@ def p_game_update(p):
 
 def p_block_vars(p):
     '''block_vars : DECLARE '{' declare_vars '}' '''
-    
+
 def p_declare_vars(p):
     '''declare_vars : declare_var declare_vars
                     | empty'''
 
 def p_declare_var(p):
     '''declare_var : type list_vars ';' '''
+    global last_vars
+    last_vars['var_type'] = p[1]
+    
+    for var_id in p[2]:
+        if not func_dir.add_variable(last_vars['scope'], var_id.value, last_vars['var_type']):
+            print(f'Error: Re-declaration of variable \'{var_id.value}\' at line: {var_id.lineno}')
+            exit()
 
 def p_list_vars(p):
     '''list_vars : ID list_vars_prima'''
+    p[0] = [Token(p[1], p.lineno(1))] + p[2]
 
 def p_list_vars_prima(p):
     '''list_vars_prima : ',' ID list_vars_prima
                        | empty'''
+    if len(p) > 2:
+        p[0] = [Token(p[2], p.lineno(2))] + p[3]
+    else:
+        p[0] = []
 
 def p_declare_func(p):
-    '''declare_func : FUNC ID ':' func_type '(' list_params ')' '{' block_code '}' '''
+    '''declare_func : FUNC ID ':' func_type seen_dec_func '(' list_params ')' '{' block_code '}' '''
 
 def p_func_start(p):
-    '''func_start : FUNC START ':' VOID '(' ')' '{' block_code '}' '''
+    '''func_start : FUNC START ':' VOID seen_dec_func '(' ')' '{' block_code '}' '''
 
 def p_func_update(p):
-    '''func_update : FUNC UPDATE ':' VOID '(' ')' '{' block_code '}' '''
+    '''func_update : FUNC UPDATE ':' VOID seen_dec_func '(' ')' '{' block_code '}' '''
 
 def p_list_params(p):
-    '''list_params : type ID list_params_prima
+    '''list_params : type ID seen_param list_params_prima
                    | empty'''
 
 def p_list_params_prima(p):
-    '''list_params_prima : ',' type ID list_params_prima
+    '''list_params_prima : ',' type ID seen_param list_params_prima
                          | empty'''
 
 def p_func_type(p):
     '''func_type : type
                  | VOID '''
+    p[0] = p[1]
 
 def p_block_code(p):
     '''block_code : block_vars statement_prima
@@ -142,11 +172,19 @@ def p_type(p):
             | BOOLEAN type_dims
             | CHAR type_dims
             | SPRITE type_dims'''
+    if p[2] is not None:
+        p[0] = "-".join([p[1], p[2]])
+    else:
+        p[0] = p[1]
 
 def p_type_dims(p):
     '''type_dims : '[' INT_LITERAL ']'
                  | '[' INT_LITERAL ',' INT_LITERAL ']'
                  | empty'''
+    if len(p) == 6:
+        p[0] = 'arr2d'
+    elif len(p) == 4:
+        p[0] = 'arr1d'
 
 # Pending to add unary logic operator NOT
 def p_logicop(p):
@@ -196,12 +234,35 @@ def p_id_exp(p):
               | ID '[' god_exp ']'
               | ID '[' god_exp ',' god_exp ']' '''
 
+def p_seen_dec_func(p):
+    '''seen_dec_func :'''
+    # Al llegar a esta regla, significa que hemos visto el inicio de
+    # la declaración de una función.
+    # p[-1] es la producción en la que aparece el tipo de retorno
+    # p[-3] es la producción en la que aparece el nombre de la función
+    global last_vars
+    last_vars['scope'] = p[-3]
+    if not func_dir.add_function(last_vars['scope'], p[-1]):
+        print(f'Error: Re-declaration of function \'{p[-3]}\'.')
+        exit()
+
+def p_seen_param(p):
+    '''seen_param :'''
+    # Al llegar a esta regla, significa que hemos visto
+    # la declaración de un parámetro.
+    # p[-1] es la producción en la que aparece nombre del parámetro
+    # p[-2] es la producción en la que aparece el tipo de dato
+    if not func_dir.add_param(last_vars['scope'], p[-1], p[-2]):
+        print(f'Error: Re-declaration of function parameter \'{p[-1]}\'.')
+        exit()
+
 def p_empty(p): # representa epsilon
     '''empty : '''
     pass
 
 def p_error(p):
     print("Syntax error in input at line: ", p, p.lineno)
+    exit()
 
 parser = yacc.yacc(debug=True)
 
@@ -210,5 +271,4 @@ f = open('test.tudi', 'r')
 data = f.read()
 f.close()
 
-if parser.parse(data) == "Aceptado":
-    print("Todo es valido")
+parser.parse(data)
