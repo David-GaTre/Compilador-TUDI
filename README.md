@@ -1,6 +1,11 @@
 # TUDI
 
 ## Avance 2
+Se corrige un error en la gramática de las expresiones relacionales (<, <=, ==, !=, >=, >). Se agrega la primera iteración del cubo semántico.
+
+Se están corrigiendo comentarios del directorio de funciones y tablas de variables. Y se está trabajando en la generación de los cuádruplos.
+
+## Avance 2
 Se completó lo pendiente del avance 1, solucionando los errores de la gramática y los conflictos shift/reduce. Se cambió la escritura de los tokens en el parser para anotar los caracteres por su cuenta. Se agregaron tokens para llamadas a funciones y de métodos propios del lenguaje. Actualmente todos los tokens son utilizados a excepción del operador lógico NOT que queda pendiente para el siguiente avance. 
 
 Se creó el cuadro semántico de tipos, queda pendiente completar el cubo semántico para añadir las operandos.
