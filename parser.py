@@ -1,15 +1,10 @@
-from lexer import Lexer, tokens, literals
+from lexer import Lexer, tokens, literals, Token
 from dir_vars import FunctionsDirectory
 
 import ply.yacc as yacc
 
 func_dir = FunctionsDirectory()
 last_vars = {'scope': func_dir.GLOBAL_ENV, 'var_type': None}
-
-class Token:
-    def __init__(self, value, lineno):
-        self.value = value
-        self.lineno = lineno
 
 def p_game(p):
     '''game : GAME ID ';' CANVAS ASSIGN_OP INT_LITERAL ',' INT_LITERAL ';' game_vars game_funcs'''
@@ -241,12 +236,22 @@ def p_id_exp(p):
 
 def p_seen_dec_func(p):
     '''seen_dec_func :'''
+    # Al llegar a esta regla, significa que hemos visto el inicio de
+    # la declaración de una función.
+    # p[-1] es la producción en la que aparece el tipo de retorno
+    # p[-3] es la producción en la que aparece el nombre de la función
     global last_vars
     last_vars['scope'] = p[-3]
-    func_dir.add_function(last_vars['scope'], p[-1])
+    if not func_dir.add_function(last_vars['scope'], p[-1]):
+        print(f'Error: Re-declaration of function \'{p[-3]}\'.')
+        exit()
 
 def p_seen_param(p):
     '''seen_param :'''
+    # Al llegar a esta regla, significa que hemos visto
+    # la declaración de un parámetro.
+    # p[-1] es la producción en la que aparece nombre del parámetro
+    # p[-2] es la producción en la que aparece el tipo de dato
     if not func_dir.add_param(last_vars['scope'], p[-1], p[-2]):
         print(f'Error: Re-declaration of function parameter \'{p[-1]}\'.')
         exit()
