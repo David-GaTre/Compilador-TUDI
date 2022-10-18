@@ -164,7 +164,7 @@ def p_super_exp(p):
     '''super_exp : exp super_exp_prima'''
 
 def p_super_exp_prima(p):
-    '''super_exp_prima : REL_OP super_exp
+    '''super_exp_prima : REL_OP exp
                        | empty'''
 
 def p_exp(p):
