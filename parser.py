@@ -132,6 +132,10 @@ def p_call_func(p):
     '''call_func : ID '(' list_args ')'
                  | io_func 
                  | cast_func'''
+    if len(p) > 2:
+        if not func_dir.find_function(p[1]):
+            print(f'Error: Function \'{p[1]}\' at line {p.lineno(1)} was not declared.')
+            exit()
 
 def p_call_method(p):
     '''call_method : id_exp '.' call_method_prima '(' list_args ')' '''
@@ -233,6 +237,16 @@ def p_id_exp(p):
     '''id_exp : ID
               | ID '[' god_exp ']'
               | ID '[' god_exp ',' god_exp ']' '''
+    if len(p) == 6:
+        p[0] = Token([p[1], p[3], p[5]], p.lineno(1))
+    elif len(p) == 4:
+        p[0] = Token([p[1], p[3]], p.lineno(1))
+    else:
+        p[0] = Token(p[1], p.lineno(1))
+
+    if not func_dir.find_variable(last_vars['scope'], p[1]):
+        print(f'Error: Variable \'{p[1]}\' at line {p.lineno(1)} was not declared.')
+        exit()
 
 def p_seen_dec_func(p):
     '''seen_dec_func :'''

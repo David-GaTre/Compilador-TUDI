@@ -72,3 +72,9 @@ class FunctionsDirectory:
 
         _, var_table = self.directory[self.GLOBAL_ENV]['table'].get_variable(var_name)
         return var_table
+
+    def find_function(self, func_name: str) -> Dict:
+        if func_name not in self.directory:
+            return {}
+
+        return self.directory[func_name]
