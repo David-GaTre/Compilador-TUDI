@@ -4,22 +4,22 @@ canvas = 10, 10;
 declare {
     int num;
     float x_pos, y_pos, z_pos;
-    boolean isMoving;
+    bool isMoving;
     char letter;
     sprite avatar;
     int[1] row;
-    int[1, 2] inventory 
+    int[1, 2] inventory;
 }
 
 func DoSomethingA : void () {
     declare {
         int local_int;
         float x_local, y_local, z_local;
-        boolean isMoving_local;
+        bool isMoving_local;
         char letter_local;
         sprite avatar_local;
         int[1] row_local;
-        int[1, 2] inventory_local 
+        int[1, 2] inventory_local;
     }
 }
 
@@ -27,11 +27,11 @@ func Start : void () {
     declare {
         int local_int;
         float x_local, y_local, z_local;
-        boolean isMoving_local;
+        bool isMoving_local;
         char letter_local;
         sprite avatar_local;
         int[1] row_local;
-        int[1, 2] inventory_local 
+        int[1, 2] inventory_local;
     }
 }
 
@@ -39,10 +39,10 @@ func Update : void () {
     declare {
         int local_int;
         float x_local, y_local, z_local;
-        boolean isMoving_local;
+        bool isMoving_local;
         char letter_local;
         sprite avatar_local;
         int[1] row_local;
-        int[1, 2] inventory_local 
+        int[1, 2] inventory_local;
     }
 }

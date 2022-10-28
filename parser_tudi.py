@@ -206,8 +206,16 @@ def p_super_exp(p):
     '''super_exp : exp super_exp_prima'''
 
 def p_super_exp_prima(p):
-    '''super_exp_prima : REL_OP exp
+    '''super_exp_prima : rel_op exp
                        | empty'''
+
+def p_rel_op(p):
+    '''rel_op : LT
+              | LE
+              | EQ
+              | GT
+              | GE
+              | NE'''
 
 def p_exp(p):
     '''exp : term exp_prima'''
@@ -278,7 +286,8 @@ def p_error(p):
     print("Syntax error in input at line: ", p, p.lineno)
     exit()
 
-
+# Por el momento esto es asi para poder "reiniciar" el directorio
+# y el scope a su estado inicial.
 def get_parser(withDebug=False):
     global func_dir
     func_dir = FunctionsDirectory()
@@ -286,5 +295,6 @@ def get_parser(withDebug=False):
     global last_vars
     last_vars = {'scope': func_dir.GLOBAL_ENV, 'var_type': None}
     
-    parser = yacc.yacc(debug=withDebug)
-    return parser
+    # "Reiniciar" el contador de lineas del lexer
+    Lexer.lineno = 1
+    return yacc.yacc(debug=withDebug)

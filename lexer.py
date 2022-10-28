@@ -34,7 +34,7 @@ reserved = {
 }
 
 tokens = [
-    'REL_OP',
+    'LT', 'LE', 'EQ', 'GT', 'GE', 'NE',
     'ASSIGN_OP',
     'ID',
     'INT_LITERAL', 'FLOAT_LITERAL', 'BOOL_LITERAL', 'STRING_LITERAL']
@@ -53,8 +53,13 @@ literals = [',', ':', ';', '.',
             '{', '}',
             '+', '-', '*', '/']
 
-t_ASSIGN_OP = r'='
-t_REL_OP = r'<|<=|==|>|>=|!='
+t_ASSIGN_OP = '='
+t_LT = '<'
+t_LE = '<='
+t_EQ = '=='
+t_GT = '>'
+t_GE = '>='
+t_NE = '!='
 
 # Ignore these chars (spaces and tabs)
 t_ignore  = ' \t'
@@ -70,7 +75,7 @@ def t_ID(t):
      return t
 
 def t_STRING_LITERAL(t):
-    r'\"(\w|\s)+\"' # for word and space chars
+    r'\"(\w|\s|[-*+/():=])+\"' # for alphanum, space and other chars
     return t
 
 def t_FLOAT_LITERAL(t):
