@@ -12,16 +12,16 @@ def p_game(p):
     print("Todo valido")
 
     global func_dir
-    for func, func_items in func_dir.directory.items():
-        print('Scope:', func)
-        for func_item, values in func_items.items():
-            if func_item == 'table':
-                print('\t- Variables:')
-                for k, v  in values.table.items():
-                    print('\t---', k, v)
-            else:
-                print('\t-', func_item, ':', values)
-        print()
+    # for func, func_items in func_dir.directory.items():
+    #     print('Scope:', func)
+    #     for func_item, values in func_items.items():
+    #         if func_item == 'table':
+    #             print('\t- Variables:')
+    #             for k, v  in values.table.items():
+    #                 print('\t---', k, v)
+    #         else:
+    #             print('\t-', func_item, ':', values)
+    #     print()
 
 def p_game_vars(p):
     '''game_vars : block_vars
@@ -278,11 +278,13 @@ def p_error(p):
     print("Syntax error in input at line: ", p, p.lineno)
     exit()
 
-parser = yacc.yacc(debug=True)
 
-# file_name = input("Nombre de archivo: ")
-f = open('test.tudi', 'r')
-data = f.read()
-f.close()
-
-parser.parse(data)
+def get_parser(withDebug=False):
+    global func_dir
+    func_dir = FunctionsDirectory()
+    
+    global last_vars
+    last_vars = {'scope': func_dir.GLOBAL_ENV, 'var_type': None}
+    
+    parser = yacc.yacc(debug=withDebug)
+    return parser
