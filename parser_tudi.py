@@ -12,16 +12,16 @@ def p_game(p):
     print("Todo valido")
 
     global func_dir
-    # for func, func_items in func_dir.directory.items():
-    #     print('Scope:', func)
-    #     for func_item, values in func_items.items():
-    #         if func_item == 'table':
-    #             print('\t- Variables:')
-    #             for k, v  in values.table.items():
-    #                 print('\t---', k, v)
-    #         else:
-    #             print('\t-', func_item, ':', values)
-    #     print()
+    for func, func_items in func_dir.directory.items():
+        print('Scope:', func)
+        for func_item, values in func_items.items():
+            if func_item == 'table':
+                print('\t- Variables:')
+                for k, v  in values.table.items():
+                    print('\t---', k, v)
+            else:
+                print('\t-', func_item, ':', values)
+        print()
 
 def p_game_vars(p):
     '''game_vars : block_vars
