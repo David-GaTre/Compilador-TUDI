@@ -1,0 +1,25 @@
+game test;
+canvas = 10, 10;
+
+declare {
+    int[5] vec;
+    int[5, 5] mat;
+}
+
+func Start : void () {
+    declare {
+        int i, j, five;
+    }
+
+    i = 0;
+    while (i < 5) {
+        vec[i] = i * 2;
+    }
+
+    five = 5;
+    for (i = 0; i < 5; i = i + 1) {
+        for (j = 0; j < five; j = j + 1) {
+            mat[i, j] = i + j;
+        }
+    }
+}
