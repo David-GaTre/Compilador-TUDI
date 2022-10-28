@@ -1,10 +1,29 @@
 from lexer import Lexer, tokens, literals, Token
 from dir_vars import FunctionsDirectory
+from collections import deque
 
 import ply.yacc as yacc
 
+class Quadruple():
+    def __init__(self, operator, left_operand, right_operand, temp):
+        self.id = 0
+        self.operator = operator
+        self.left_operand = left_operand
+        self.right_operand = right_operand
+        self.temp = temp
+
+    def __str__(self):
+        return f'operator: {self.operator}, left_operand: {self.left_operand}, right_operand: {self.right_operand}, temp: {self.temp}\n'
+    
+
+quadruples = []
+operator_stack = deque() 
+operand_stack = deque() 
+type_stack = deque() 
+goto_stack = deque() 
 func_dir = FunctionsDirectory()
 last_vars = {'scope': func_dir.GLOBAL_ENV, 'var_type': None}
+
 
 def p_game(p):
     '''game : GAME ID ';' CANVAS ASSIGN_OP INT_LITERAL ',' INT_LITERAL ';' game_vars game_funcs'''
@@ -157,7 +176,11 @@ def p_for_loop(p):
     '''for_loop : FOR '(' assignment ';' god_exp ';' assignment ')' '{' block_code '}' '''
 
 def p_while_loop(p):
-    '''while_loop : WHILE '(' god_exp ')' '{' block_code '}' '''
+    '''while_loop : WHILE while_act_1 '(' god_exp ')' '{' block_code '}' '''
+
+def p_while_act_1(p):
+    '''while_act_1 : '''
+    goto_stack.append(len(quadruples))
 
 def p_conditional(p):
     '''conditional : IF '(' god_exp ')' '{' block_code '}' conditional_prima'''
@@ -199,39 +222,63 @@ def p_god_exp(p):
     '''god_exp : super_exp god_exp_prima'''
 
 def p_god_exp_prima(p):
-    '''god_exp_prima : logicop god_exp
+    '''god_exp_prima : logicop add_op god_exp
                      | empty'''
 
 def p_super_exp(p):
     '''super_exp : exp super_exp_prima'''
 
 def p_super_exp_prima(p):
-    '''super_exp_prima : REL_OP exp
+    '''super_exp_prima : REL_OP add_op exp
                        | empty'''
 
 def p_exp(p):
     '''exp : term exp_prima'''
 
 def p_exp_prima(p):
-    '''exp_prima : '+' exp
-                 | '-' exp
+    '''exp_prima : '+' add_op exp
+                 | '-' add_op exp
                  | empty'''
 
 def p_term(p):
-    '''term : fact term_prima'''
+    '''term : fact term_prima term'''
 
 def p_term_prima(p):
-    '''term_prima : '/' term
-                  | '*' term
+    '''term_prima : '/' add_op term
+                  | '*' add_op term
                   | empty'''
 
 def p_fact(p):
-    '''fact : '(' god_exp ')'
+    '''fact : fact_neuro_1 '(' god_exp ')' fact_neuro_2
             | id_exp
             | INT_LITERAL
             | FLOAT_LITERAL
             | BOOL_LITERAL
             | call_func '''
+
+    rule_len = len(p) 
+    if rule_len == 2:
+        operand_stack.append(p[1].name) # aiuda
+        type_stack.append(p[1].var_type) # aiuda
+    p[0] = p[1]
+
+def p_add_op(p):
+    '''
+    add_op :
+    '''    
+    operator_stack.append(p[-1])
+
+def p_fact_neuro_1(p):
+    '''
+    factor_action1 :
+    '''
+    operator_stack.append("|") # Fondo falso
+
+def p_fact_neuro_2(p):
+    '''
+    factor_action2 :
+    '''
+    operator_stack.pop() # Fin del fondo falso
 
 def p_id_exp(p):
     '''id_exp : ID
