@@ -1,0 +1,21 @@
+game test;
+canvas = 10, 10;
+
+declare {
+    sprite avatar;
+    sprite enemy;
+}
+
+func Start : void () {    
+    avatar = sprite(1, 1);
+    enemy = sprite(2, 2);
+
+    avatar.SetPosition(2.5, 2.5);
+    avatar.SetControllable(true);
+
+    enemy.SetPosition(7.5, 7.5);
+}
+
+func Update : void () {
+    enemy.Translate(-0.5, 0);
+}
