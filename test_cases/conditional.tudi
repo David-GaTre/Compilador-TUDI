@@ -1,0 +1,66 @@
+game test;
+canvas = 10, 10;
+
+declare {
+    bool is_active;
+    int binary;
+    float count;
+}
+
+func DoSomethingBoolean : bool () {
+    declare {
+        bool always_true;
+    }
+
+    always_true = true;
+    return always_true;
+}
+
+func Start : void () {
+    is_active = true;
+    binary = 0;
+    count = 0;
+}
+
+func Update : void () {
+    if (DoSomethingBoolean()) {
+        Print("Single if");
+    }
+
+    if (binary) {
+        binary = 0;
+        Print("if and else (if)");
+    } else {
+        binary = 1;
+        Print("if and else (else)");
+    }
+
+    if (is_active y binary) {
+        is_active = false;
+        Print("if and else if (if)");
+    } else if (is_active o binary) {
+        is_active = true;
+        Print("if and else if (else if)");
+    }
+
+    if (count < 1) {
+        Print("if / 2x else if / else (if)");
+    } else if (1 <= count y count < 2) {
+        Print("if / 2x else if / else (1 - else if)");
+    } else if (3 > count y count >= 2) {
+        Print("if / 2x else if / else (2 - else if)");
+    } else {
+        Print("if / 2x else if / else (else)");
+        if (binary == 1) {
+            Print("The EQ");
+        } 
+        
+        if (binary != 1) {
+            Print("The NE");
+        }
+
+        count = 0;
+    }
+
+    count = count + 0.5;
+}

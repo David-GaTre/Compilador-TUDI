@@ -1,6 +1,6 @@
 # TUDI
 
-## Avance 2
+## Avance 3
 Se corrige un error en la gramática de las expresiones relacionales (<, <=, ==, !=, >=, >). Se agrega la primera iteración del cubo semántico.
 
 Se están corrigiendo comentarios del directorio de funciones y tablas de variables. Y se está trabajando en la generación de los cuádruplos.
