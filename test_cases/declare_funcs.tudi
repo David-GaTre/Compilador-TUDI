@@ -2,11 +2,11 @@ game test;
 canvas = 10, 10;
 
 func DoSomethingInt : int (int a, int b, int c) {
-    return  2;
+    return a * 3 + b - c * 2;
 }
 
 func DoSomethingFloat : float (float num) {
-    return  2;
+    return num / 2;
 }
 
 func DoSomethingBoolean : bool (bool idempotent) {
