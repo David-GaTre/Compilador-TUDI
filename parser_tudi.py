@@ -1,6 +1,7 @@
 from lexer import Lexer, tokens, literals, Token
 from dir_vars import FunctionsDirectory
 from collections import deque
+from sem_cube import SemanticCube
 
 import ply.yacc as yacc
 
@@ -14,16 +15,25 @@ class Quadruple():
 
     def __str__(self):
         return f'operator: {self.operator}, left_operand: {self.left_operand}, right_operand: {self.right_operand}, temp: {self.temp}\n'
-    
+
 
 quadruples = []
 operator_stack = deque() 
 operand_stack = deque() 
 type_stack = deque() 
 goto_stack = deque() 
+sem_cube = SemanticCube()
 func_dir = FunctionsDirectory()
+arr_relops = ['<', '<=', '==', '>', '>=', '!=']
+arr_logicops = ['y', 'o']
+type_dict = {'int': 'I', 'float': 'F', 'char': 'C', 'bool': 'B', 'arr1d': 'A'}
+temp_vars = 0
 last_vars = {'scope': func_dir.GLOBAL_ENV, 'var_type': None}
 
+def get_next_temp():
+    global temporals
+    temporals +=1
+    return 'T' + str(temporals)
 
 def p_game(p):
     '''game : GAME ID ';' CANVAS ASSIGN_OP INT_LITERAL ',' INT_LITERAL ';' game_vars game_funcs'''
@@ -224,13 +234,47 @@ def p_god_exp(p):
 def p_god_exp_prima(p):
     '''god_exp_prima : logicop add_op god_exp
                      | empty'''
+    if len(operator_stack) > 0:
+        if  operator_stack[-1] in arr_logicops:
+            right_oper = operand_stack.pop()
+            left_oper = operand_stack.pop()
+            right_type = type_stack.pop()
+            left_type = type_stack.pop()
+            operator = operator_stack.pop()
+            result_t = sem_cube.validate_expression(left_type, right_type, operator)
+
+            if result_t != "ERROR: Not valid operation":
+                t = get_next_temp()
+                quadruples.append(Quadruple(operator, left_oper, right_oper, t))
+                operand_stack.append(t)
+                result_t = type_dict[result_t]
+                type_stack.append(result_t)
+            else:
+                raise Exception("TYPE MISMATCH")
 
 def p_super_exp(p):
     '''super_exp : exp super_exp_prima'''
 
 def p_super_exp_prima(p):
-    '''super_exp_prima : rel_op exp
+    '''super_exp_prima : rel_op add_op exp
                        | empty'''
+    if len(operator_stack) > 0:
+        if  operator_stack[-1] in arr_relops:
+            right_oper = operand_stack.pop()
+            left_oper = operand_stack.pop()
+            right_type = type_stack.pop()
+            left_type = type_stack.pop()
+            operator = operator_stack.pop()
+            result_t = sem_cube.validate_expression(left_type, right_type, operator)
+
+            if result_t != "ERROR: Not valid operation":
+                t = get_next_temp()
+                quadruples.append(Quadruple(operator, left_oper, right_oper, t))
+                operand_stack.append(t)
+                result_t = type_dict[result_t]
+                type_stack.append(result_t)
+            else:
+                raise Exception("TYPE MISMATCH")
 
 def p_rel_op(p):
     '''rel_op : LT
@@ -247,6 +291,23 @@ def p_exp_prima(p):
     '''exp_prima : '+' add_op exp
                  | '-' add_op exp
                  | empty'''
+    if len(operator_stack) > 0:
+        if  operator_stack[-1] == "+" or operator_stack[-1] == "-":
+            right_oper = operand_stack.pop()
+            left_oper = operand_stack.pop()
+            right_type = type_stack.pop()
+            left_type = type_stack.pop()
+            operator = operator_stack.pop()
+            result_t = sem_cube.validate_expression(left_type, right_type, operator)
+
+            if result_t != "ERROR: Not valid operation":
+                t = get_next_temp()
+                quadruples.append(Quadruple(operator, left_oper, right_oper, t))
+                operand_stack.append(t)
+                result_t = type_dict[result_t]
+                type_stack.append(result_t)
+            else:
+                raise Exception("TYPE MISMATCH")
 
 def p_term(p):
     '''term : fact term_prima term'''
@@ -255,6 +316,23 @@ def p_term_prima(p):
     '''term_prima : '/' add_op term
                   | '*' add_op term
                   | empty'''
+    if len(operator_stack) > 0:
+        if  operator_stack[-1] == "*" or operator_stack[-1] == "/":
+            right_oper = operand_stack.pop()
+            left_oper = operand_stack.pop()
+            right_type = type_stack.pop()
+            left_type = type_stack.pop()
+            operator = operator_stack.pop()
+            result_t = sem_cube.validate_expression(left_type, right_type, operator)
+
+            if result_t != "ERROR: Not valid operation":
+                t = get_next_temp()
+                quadruples.append(Quadruple(operator, left_oper, right_oper, t))
+                operand_stack.append(t)
+                result_t = type_dict[result_t]
+                type_stack.append(result_t)
+            else:
+                raise Exception("TYPE MISMATCH")
 
 def p_fact(p):
     '''fact : fact_neuro_1 '(' god_exp ')' fact_neuro_2
@@ -274,17 +352,17 @@ def p_add_op(p):
     '''
     add_op :
     '''    
-    operator_stack.append(p[-1])
+    operator_stack.append(p[-1]) # Add previous operator to stack
 
 def p_fact_neuro_1(p):
     '''
-    factor_action1 :
+    fact_neuro_1 :
     '''
     operator_stack.append("|") # Fondo falso
 
 def p_fact_neuro_2(p):
     '''
-    factor_action2 :
+    fact_neuro_2 :
     '''
     operator_stack.pop() # Fin del fondo falso
 
