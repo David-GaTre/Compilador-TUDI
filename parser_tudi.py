@@ -363,7 +363,6 @@ def p_bool(p):
 
 def p_add_op(p):
     '''add_op : '''
-    print(p[-1])    
     operator_stack.append(p[-1]) # Add previous operator to stack
 
 def p_fact_neuro_1(p):
