@@ -2,15 +2,15 @@ game test;
 canvas = 10, 10;
 
 func DoSomethingInt : int (int a, int b, int c) {
-    return a + b - c;
+    return  2;
 }
 
 func DoSomethingFloat : float (float num) {
-    return num / 2;
+    return  2;
 }
 
 func DoSomethingBoolean : bool (bool idempotent) {
-    return idempotent;
+    return idempotent o true o false y true >= 2;
 }
 
 func DoSomethingChar : char (char digit) {
@@ -24,6 +24,7 @@ func DoSomethingSprite : sprite (sprite avatar) {
 func DoSomethingVector : int[3] (int a, int b, int c) {
     declare {
         int[3] vec;
+        int ooo;
     }
 
     vec[0] = a;
