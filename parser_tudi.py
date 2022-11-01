@@ -232,11 +232,10 @@ def p_type_dims(p):
 
 
 def p_god_exp(p):
-    '''god_exp : super_exp god_exp_prima'''
+    '''god_exp : super_exp god_exp_neuro_1 god_exp_prima'''
 
-def p_god_exp_prima(p):
-    '''god_exp_prima : LOGIC_OPS add_op god_exp
-                     | empty'''
+def p_god_exp_neuro_1(p):
+    '''god_exp_neuro_1 : '''
     if len(operator_stack) > 0:
         if operator_stack[-1] in arr_logicops:
             right_oper = operand_stack.pop()
@@ -255,12 +254,15 @@ def p_god_exp_prima(p):
             else:
                 raise Exception("TYPE MISMATCH")
 
-def p_super_exp(p):
-    '''super_exp : exp super_exp_prima'''
+def p_god_exp_prima(p):
+    '''god_exp_prima : LOGIC_OPS add_op god_exp
+                     | empty'''
 
-def p_super_exp_prima(p):
-    '''super_exp_prima : REL_OPS add_op exp
-                       | empty'''
+def p_super_exp(p):
+    '''super_exp : exp super_exp_neuro_1 super_exp_prima'''
+
+def p_super_exp_neuro_1(p):
+    '''super_exp_neuro_1 : '''
     if len(operator_stack) > 0:
         if operator_stack[-1] in arr_relops:
             right_oper = operand_stack.pop()
@@ -279,13 +281,15 @@ def p_super_exp_prima(p):
             else:
                 raise Exception("TYPE MISMATCH")
 
-def p_exp(p):
-    '''exp : term exp_prima'''
+def p_super_exp_prima(p):
+    '''super_exp_prima : REL_OPS add_op exp
+                       | empty'''
 
-def p_exp_prima(p):
-    '''exp_prima : '+' add_op exp
-                 | '-' add_op exp
-                 | empty'''
+def p_exp(p):
+    '''exp : term exp_neuro_1 exp_prima'''
+
+def p_exp_neuro_1(p):
+    '''exp_neuro_1 : '''
     if len(operator_stack) > 0:
         if operator_stack[-1] == "+" or operator_stack[-1] == "-":
             right_oper = operand_stack.pop()
@@ -304,13 +308,16 @@ def p_exp_prima(p):
             else:
                 raise Exception("TYPE MISMATCH")
 
-def p_term(p):
-    '''term : fact term_prima'''
+def p_exp_prima(p):
+    '''exp_prima : '+' add_op exp
+                 | '-' add_op exp
+                 | empty'''
 
-def p_term_prima(p):
-    '''term_prima : '/' add_op term
-                  | '*' add_op term
-                  | empty'''
+def p_term(p):
+    '''term : fact term_neuro_1 term_prima'''
+
+def p_term_neuro_1(p):
+    '''term_neuro_1 : '''
     if len(operator_stack) > 0:
         if  operator_stack[-1] == "*" or operator_stack[-1] == "/":
             right_oper = operand_stack.pop()
@@ -328,6 +335,11 @@ def p_term_prima(p):
                 type_stack.append(result_t)
             else:
                 raise Exception("TYPE MISMATCH")
+
+def p_term_prima(p):
+    '''term_prima : '/' add_op term
+                  | '*' add_op term
+                  | empty'''
 
 def p_fact(p):
     '''fact : fact_neuro_1 '(' god_exp ')' fact_neuro_2
