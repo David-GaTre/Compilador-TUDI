@@ -53,7 +53,7 @@ literals = [',', ':', ';', '.',
 t_ASSIGN_OP = '='
 
 def t_REL_OPS(t):
-    r'\<\=|\>\=|\>|\<|\!\=|\=\='
+    r'<=|>=|>|<|!=|=='
     return t
 
 def t_LOGIC_OPS(t):

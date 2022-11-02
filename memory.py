@@ -1,23 +1,23 @@
 # NUMERIC CONSTANTS FOR MEMORY ADDRESSING
-global_int = 0
-global_float = 4000
-global_bool = 8000
-global_char  = 12000
+GLOBAL_INT = 0
+GLOBAL_FLOAT = 4000
+GLOBAL_BOOL = 8000
+GLOBAL_CHAR  = 12000
 
-local_int = 20000
-local_float = 24000
-local_bool = 28000
-local_char  = 32000
+LOCAL_INT = 20000
+LOCAL_FLOAT = 24000
+LOCAL_BOOL = 28000
+LOCAL_CHAR  = 32000
 
-temp_int = 40000
-temp_float = 44000
-temp_bool = 48000
-temp_char  = 52000
+TEMP_INT = 40000
+TEMP_FLOAT = 44000
+TEMP_BOOL = 48000
+TEMP_CHAR  = 52000
 
-const_int = 60000
-const_float = 64000
-const_bool = 68000
-const_char  = 72000
+CONST_INT = 60000
+CONST_FLOAT = 64000
+CONST_BOOL = 68000
+CONST_CHAR  = 72000
 
 GLOBAL_START = 0
 LOCAL_START = 20000

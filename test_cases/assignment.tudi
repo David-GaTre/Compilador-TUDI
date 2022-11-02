@@ -5,6 +5,8 @@ declare {
     float num;
     int[3] vec;
     int[5, 5] mat;
+    int yoyoooy;
+    int yyyy;
 }
 
 func DoSomethingA : int () {
