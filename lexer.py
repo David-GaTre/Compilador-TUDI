@@ -25,8 +25,6 @@ reserved = {
     'else': 'ELSE',
     'for': 'FOR',
     'while': 'WHILE',
-    'y': 'AND',
-    'o': 'OR',
     'no': 'NOT',
     'SetPosition': 'SETPOSITION',
     'Translate': 'TRANSLATE',
@@ -34,9 +32,8 @@ reserved = {
 }
 
 tokens = [
-    'LT', 'LE', 'EQ', 'GT', 'GE', 'NE',
-    'ASSIGN_OP',
-    'ID',
+    'ASSIGN_OP', 'LOGIC_OPS', 'REL_OPS',
+    'ID', 
     'INT_LITERAL', 'FLOAT_LITERAL', 'BOOL_LITERAL', 'STRING_LITERAL']
     
 tokens = tokens + list(reserved.values())
@@ -54,12 +51,14 @@ literals = [',', ':', ';', '.',
             '+', '-', '*', '/']
 
 t_ASSIGN_OP = '='
-t_LT = '<'
-t_LE = '<='
-t_EQ = '=='
-t_GT = '>'
-t_GE = '>='
-t_NE = '!='
+
+def t_REL_OPS(t):
+    r'<=|>=|>|<|!=|=='
+    return t
+
+def t_LOGIC_OPS(t):
+    r'\b(o|y)\b'
+    return t
 
 # Ignore these chars (spaces and tabs)
 t_ignore  = ' \t'

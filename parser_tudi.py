@@ -1,10 +1,60 @@
 from lexer import Lexer, tokens, literals, Token
 from dir_vars import FunctionsDirectory
+from collections import deque
+from sem_cube import SemanticCube
 
 import ply.yacc as yacc
 
+class Quadruple():
+    def __init__(self, operator, left_operand, right_operand, temp):
+        global count_q
+        self.id = count_q
+        self.operator = operator
+        self.left_operand = left_operand
+        self.right_operand = right_operand
+        self.temp = temp
+        count_q += 1
+
+    def __str__(self):
+        return f'id: {self.id}, operator: {self.operator}, left_operand: {self.left_operand}, right_operand: {self.right_operand}, temp: {self.temp}\n'
+
+
+quadruples = []
+operator_stack = deque() 
+operand_stack = deque() 
+type_stack = deque() 
+goto_stack = deque() 
+sem_cube = SemanticCube()
 func_dir = FunctionsDirectory()
+count_q = 1
+arr_relops = ['<', '<=', '==', '>', '>=', '!=']
+arr_logicops = ['y', 'o']
+type_dict = {'int': 'I', 'float': 'F', 'char': 'C', 'bool': 'B', 'arr1d': 'A'}
+temp_vars = 0
 last_vars = {'scope': func_dir.GLOBAL_ENV, 'var_type': None}
+
+def get_next_temp():
+    # On the meantime returns string, wait for memory implementation
+    global temp_vars
+    temp_vars +=1
+    return 'T' + str(temp_vars)
+
+def check_stack_operand(arr_operands):
+    if len(operator_stack) > 0 and (operator_stack[-1] in arr_operands):
+        right_oper = operand_stack.pop()
+        left_oper = operand_stack.pop()
+        right_type = type_stack.pop()
+        left_type = type_stack.pop()
+        operator = operator_stack.pop()
+        result_t = sem_cube.validate_expression(left_type, right_type, operator)
+
+        if result_t == "ERROR: Not valid operation":
+            raise Exception("TYPE MISMATCH")
+        t = get_next_temp()
+        quadruples.append(Quadruple(operator, left_oper, right_oper, t))
+        operand_stack.append(t)
+        result_t = type_dict[result_t]
+        type_stack.append(result_t)
 
 def p_game(p):
     '''game : GAME ID ';' CANVAS ASSIGN_OP INT_LITERAL ',' INT_LITERAL ';' game_vars game_funcs'''
@@ -22,6 +72,8 @@ def p_game(p):
             else:
                 print('\t-', func_item, ':', values)
         print()
+    for i in quadruples:
+        print(i)
 
 def p_game_vars(p):
     '''game_vars : block_vars
@@ -136,6 +188,7 @@ def p_call_func(p):
         if not func_dir.find_function(p[1]):
             print(f'Error: Function \'{p[1]}\' at line {p.lineno(1)} was not declared.')
             exit()
+    p[0] = [0, 'B', p[0]] # Dummy value in the meantime, need help obtaining data type
 
 def p_call_method(p):
     '''call_method : id_exp '.' call_method_prima '(' list_args ')' '''
@@ -157,7 +210,11 @@ def p_for_loop(p):
     '''for_loop : FOR '(' assignment ';' god_exp ';' assignment ')' '{' block_code '}' '''
 
 def p_while_loop(p):
-    '''while_loop : WHILE '(' god_exp ')' '{' block_code '}' '''
+    '''while_loop : WHILE while_act_1 '(' god_exp ')' '{' block_code '}' '''
+
+def p_while_act_1(p):
+    '''while_act_1 : '''
+    goto_stack.append(len(quadruples))
 
 def p_conditional(p):
     '''conditional : IF '(' god_exp ')' '{' block_code '}' conditional_prima'''
@@ -190,71 +247,116 @@ def p_type_dims(p):
     elif len(p) == 4:
         p[0] = 'arr1d'
 
-# Pending to add unary logic operator NOT
-def p_logicop(p):
-    '''logicop : AND
-               | OR'''
 
 def p_god_exp(p):
-    '''god_exp : super_exp god_exp_prima'''
+    '''god_exp : super_exp god_exp_neuro_1 god_exp_prima'''
+
+def p_god_exp_neuro_1(p):
+    '''god_exp_neuro_1 : '''
+    check_stack_operand(arr_logicops)
 
 def p_god_exp_prima(p):
-    '''god_exp_prima : logicop god_exp
+    '''god_exp_prima : LOGIC_OPS add_op god_exp
                      | empty'''
 
 def p_super_exp(p):
-    '''super_exp : exp super_exp_prima'''
+    '''super_exp : exp super_exp_neuro_1 super_exp_prima'''
+
+def p_super_exp_neuro_1(p):
+    '''super_exp_neuro_1 : '''
+    check_stack_operand(arr_relops)
 
 def p_super_exp_prima(p):
-    '''super_exp_prima : rel_op exp
+    '''super_exp_prima : REL_OPS add_op exp
                        | empty'''
 
-def p_rel_op(p):
-    '''rel_op : LT
-              | LE
-              | EQ
-              | GT
-              | GE
-              | NE'''
-
 def p_exp(p):
-    '''exp : term exp_prima'''
+    '''exp : term exp_neuro_1 exp_prima'''
+
+def p_exp_neuro_1(p):
+    '''exp_neuro_1 : '''
+    check_stack_operand(["+", "-"])
 
 def p_exp_prima(p):
-    '''exp_prima : '+' exp
-                 | '-' exp
+    '''exp_prima : '+' add_op exp
+                 | '-' add_op exp
                  | empty'''
 
 def p_term(p):
-    '''term : fact term_prima'''
+    '''term : fact term_neuro_1 term_prima'''
+
+def p_term_neuro_1(p):
+    '''term_neuro_1 : '''
+    check_stack_operand(["*", "/"])
 
 def p_term_prima(p):
-    '''term_prima : '/' term
-                  | '*' term
+    '''term_prima : '/' add_op term
+                  | '*' add_op term
                   | empty'''
 
 def p_fact(p):
-    '''fact : '(' god_exp ')'
-            | id_exp
-            | INT_LITERAL
-            | FLOAT_LITERAL
-            | BOOL_LITERAL
-            | call_func '''
+    '''fact : fact_neuro_1 '(' god_exp ')' fact_neuro_2
+            | fact_constants '''
+
+    if len(p) == 2:
+        operand_stack.append(p[1][0]) # aiuda
+        type_stack.append(p[1][1]) # aiuda
+    p[0] = p[1]
+
+
+def p_fact_constants(p):
+    '''
+    fact_constants : id_exp
+                    | int
+                    | float
+                    | bool
+                    | call_func
+    '''
+    p[0] = p[1]
+
+def p_int(p):
+    '''int : INT_LITERAL'''
+    p[0] = [p[1], 'I'] # Dummy value on the meantime
+
+def p_float(p):
+    '''float : FLOAT_LITERAL'''
+    p[0] = [p[1], 'F'] # Dummy value on the meantime
+
+def p_bool(p):
+    '''bool : BOOL_LITERAL'''
+    p[0] = [p[1], 'B'] # Dummy value on the meantime
+
+def p_add_op(p):
+    '''add_op : '''
+    operator_stack.append(p[-1]) # Add previous operator to stack
+
+def p_fact_neuro_1(p):
+    '''fact_neuro_1 :'''
+    operator_stack.append("|") # Fondo falso
+
+def p_fact_neuro_2(p):
+    '''fact_neuro_2 :'''
+    operator_stack.pop() # Fin del fondo falso
 
 def p_id_exp(p):
-    '''id_exp : ID
-              | ID '[' god_exp ']'
-              | ID '[' god_exp ',' god_exp ']' '''
+    '''id_exp : id_term
+              | id_term '[' god_exp ']'
+              | id_term '[' god_exp ',' god_exp ']' '''
     if len(p) == 6:
-        p[0] = Token([p[1], p[3], p[5]], p.lineno(1))
+        p[0] = Token([p[1][0], p[3], p[5]], p.lineno(1))
     elif len(p) == 4:
-        p[0] = Token([p[1], p[3]], p.lineno(1))
+        p[0] = Token([p[1][0], p[3]], p.lineno(1))
     else:
-        p[0] = Token(p[1], p.lineno(1))
+        p[0] = Token(p[1][0], p.lineno(1))
 
-    if not func_dir.find_variable(last_vars['scope'], p[1]):
+    if not func_dir.find_variable(last_vars['scope'], p[1][0]):
         print(f'Error: Variable \'{p[1]}\' at line {p.lineno(1)} was not declared.')
         exit()
+    p[0] = [0, p[1][1], p[0]]
+
+def p_id_term(p):
+    '''id_term : ID'''
+    p[0] = [p[1], 'B'] # need help obtaining the type of the variable
 
 def p_seen_dec_func(p):
     '''seen_dec_func :'''
