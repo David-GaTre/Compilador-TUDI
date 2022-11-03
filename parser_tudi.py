@@ -1,9 +1,12 @@
-from lexer import Lexer, tokens, literals, Token
+from lexer import LexerTudi, Token
 from dir_vars import FunctionsDirectory
 from collections import deque
 from sem_cube import SemanticCube
 
 import ply.yacc as yacc
+
+tokens = LexerTudi.tokens
+literals = LexerTudi.literals
 
 class Quadruple():
     def __init__(self, operator, left_operand, right_operand, temp):
@@ -17,7 +20,6 @@ class Quadruple():
 
     def __str__(self):
         return f'id: {self.id}, operator: {self.operator}, left_operand: {self.left_operand}, right_operand: {self.right_operand}, temp: {self.temp}\n'
-
 
 quadruples = []
 operator_stack = deque() 
@@ -398,5 +400,6 @@ def get_parser(withDebug=False):
     last_vars = {'scope': func_dir.GLOBAL_ENV, 'var_type': None}
     
     # "Reiniciar" el contador de lineas del lexer
-    Lexer.lineno = 1
+    lexer = LexerTudi()
+    lexer.build()
     return yacc.yacc(debug=withDebug)
