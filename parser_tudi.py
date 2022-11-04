@@ -85,7 +85,7 @@ class ParserTudi(object):
     # Declaración de variables globales (opcional)
     def p_game_vars(self, p):
         '''game_vars : block_vars
-                    | empty'''
+                     | empty'''
 
     # Definición de funciones:
     # - Funciones definidas por el usuario (opcionales)
@@ -93,18 +93,18 @@ class ParserTudi(object):
     #   con código del usuario
     def p_game_funcs(self, p):
         '''game_funcs : declare_func game_funcs
-                    | game_start'''
+                      | game_start'''
 
     # Definición de función Start de TUDI (opcional)
     # Continúa con función Update de TUDI
     def p_game_start(self, p):
         '''game_start : func_start game_update
-                    | game_update'''
+                      | game_update'''
 
     # Definición de función Update de TUDI (opcional)
     def p_game_update(self, p):
         '''game_update : func_update
-                    | empty'''
+                       | empty'''
 
     # Bloque de declaración de variables
     def p_block_vars(self, p):
@@ -134,7 +134,7 @@ class ParserTudi(object):
     # Añadir una variable a la lista de variables
     def p_list_vars_prima(self, p):
         '''list_vars_prima : ',' ID list_vars_prima
-                        | empty'''
+                           | empty'''
         if len(p) > 2:
             p[0] = [Token(p[2], p.lineno(2))] + p[3]
         else:
@@ -162,18 +162,18 @@ class ParserTudi(object):
     # Lista de parámetros de una función
     def p_list_params(self, p):
         '''list_params : type ID seen_param list_params_prima
-                    | empty'''
+                       | empty'''
 
     # Añadir un parámetro a la lista de parámetros
     def p_list_params_prima(self, p):
         '''list_params_prima : ',' type ID seen_param list_params_prima
-                            | empty'''
+                             | empty'''
 
     # Tipo de dato posible como retorno de una función:
     # - Todos y VOID
     def p_func_type(self, p):
         '''func_type : type
-                    | VOID '''
+                     | VOID '''
         p[0] = p[1]
 
     # Bloque de código, puede incluir:
@@ -181,8 +181,8 @@ class ParserTudi(object):
     # - Estatutos
     def p_block_code(self, p):
         '''block_code : block_vars statement_prima
-                    | statement statement_prima
-                    | empty'''
+                      | statement statement_prima
+                      | empty'''
 
     # Un estatuto puede ser:
     # - Llamada a una función o métodos
@@ -191,17 +191,17 @@ class ParserTudi(object):
     # - Estatuto de retorno
     def p_statement(self, p):
         '''statement : call_func ';'
-                    | for_loop
-                    | while_loop
-                    | conditional
-                    | assignment ';'
-                    | return ';'
-                    | call_method ';' '''
+                     | for_loop
+                     | while_loop
+                     | conditional
+                     | assignment ';'
+                     | return ';'
+                     | call_method ';' '''
 
     # Añadir un estatuto más
     def p_statement_prima(self, p):
         '''statement_prima : statement statement_prima
-                        | empty'''
+                           | empty'''
 
     # Estatuto de retorno:
     # - Regresa una expresión
@@ -214,32 +214,32 @@ class ParserTudi(object):
     #         el argumento provisto. Retorna un string literal
     def p_io_func(self, p):
         '''io_func : PRINT '(' io_func_prima ')'
-                | READ  '(' io_func_prima ')' '''
+                   | READ  '(' io_func_prima ')' '''
 
     # El argumento posible de una función I/O
     def p_io_func_prima(self, p):
         '''io_func_prima : STRING_LITERAL
-                        | empty'''
+                         | empty'''
 
     # Funciones built-in de cast en TUDI:
     # - Para los tipos de datos: int, float y bool
     # - Reciben un string literal o un arreglo de chars
     def p_cast_func(self, p):
         '''cast_func : INT cast_func_prima
-                    | FLOAT cast_func_prima
-                    | BOOLEAN cast_func_prima'''
+                     | FLOAT cast_func_prima
+                     | BOOLEAN cast_func_prima'''
 
     # El argumento posible de una función de cast:
     # - String literal o arreglo de chars
     def p_cast_func_prima(self, p):
         '''cast_func_prima : '(' STRING_LITERAL ')'
-                        | '(' god_exp ')' '''
+                           | '(' god_exp ')' '''
 
     # Llamada a una función
     def p_call_func(self, p):
         '''call_func : ID '(' list_args ')'
-                    | io_func
-                    | cast_func'''
+                     | io_func
+                     | cast_func'''
         # Checa que exista una función definida por el usuario
         if len(p) > 2:
             if not self.func_dir.find_function(p[1]):
@@ -261,18 +261,18 @@ class ParserTudi(object):
     #                    define si el sprite puede ser manipulado por las teclas del usuario
     def p_call_method_prima(self, p):
         '''call_method_prima : SETPOSITION
-                            | TRANSLATE
-                            | SETCONTROLLABLE '''
+                             | TRANSLATE
+                             | SETCONTROLLABLE '''
 
     # Lista de argumentos (expresiones)
     def p_list_args(self, p):
         '''list_args : god_exp list_args_prima
-                    | empty'''
+                     | empty'''
 
     # Añadir un argumento a la lista de argumentos
     def p_list_args_prima(self, p):
         '''list_args_prima : ',' god_exp list_args_prima
-                        | empty'''
+                           | empty'''
 
     # Ciclo for loop (C/C++ style)
     def p_for_loop(self, p):
@@ -293,8 +293,8 @@ class ParserTudi(object):
     # Else-If / Else condicional (C/C++ style)
     def p_conditional_prima(self, p):
         '''conditional_prima : ELSE conditional
-                            | ELSE '{' block_code '}'
-                            | empty'''
+                             | ELSE '{' block_code '}'
+                             | empty'''
 
     # Asignación de una expresión a una variables:
     # - Se debe verificar que los tipos de datos coincidan
@@ -318,8 +318,8 @@ class ParserTudi(object):
     # aceptan int literals para la definición del tamaño
     def p_type_dims(self, p):
         '''type_dims : '[' INT_LITERAL ']'
-                    | '[' INT_LITERAL ',' INT_LITERAL ']'
-                    | empty'''
+                     | '[' INT_LITERAL ',' INT_LITERAL ']'
+                     | empty'''
         if len(p) == 6:
             p[0] = 'arr2d'
         elif len(p) == 4:
@@ -336,7 +336,7 @@ class ParserTudi(object):
     # Operadores lógicos
     def p_god_exp_prima(self, p):
         '''god_exp_prima : LOGIC_OPS add_op god_exp
-                        | empty'''
+                         | empty'''
 
     def p_super_exp(self, p):
         '''super_exp : exp super_exp_neuro_1 super_exp_prima'''
@@ -348,7 +348,7 @@ class ParserTudi(object):
     # Operadores relacionales
     def p_super_exp_prima(self, p):
         '''super_exp_prima : REL_OPS add_op exp
-                        | empty'''
+                           | empty'''
 
     def p_exp(self, p):
         '''exp : term exp_neuro_1 exp_prima'''
@@ -360,8 +360,8 @@ class ParserTudi(object):
     # Operadores suma y resta
     def p_exp_prima(self, p):
         '''exp_prima : '+' add_op exp
-                    | '-' add_op exp
-                    | empty'''
+                     | '-' add_op exp
+                     | empty'''
 
     def p_term(self, p):
         '''term : fact term_neuro_1 term_prima'''
@@ -373,8 +373,8 @@ class ParserTudi(object):
     # Operadores de multiplación y división
     def p_term_prima(self, p):
         '''term_prima : '/' add_op term
-                    | '*' add_op term
-                    | empty'''
+                      | '*' add_op term
+                      | empty'''
 
     # Factores de una expresión:
     # - Operadores de agrupacion (paréntesis)
@@ -393,10 +393,10 @@ class ParserTudi(object):
     def p_fact_constants(self, p):
         '''
         fact_constants : id_exp
-                        | int
-                        | float
-                        | bool
-                        | call_func
+                       | int
+                       | float
+                       | bool
+                       | call_func
         '''
         p[0] = p[1]
 
@@ -432,8 +432,8 @@ class ParserTudi(object):
     # - Elemento de un arreglo de 1 o 2 dimensiones
     def p_id_exp(self, p):
         '''id_exp : id_term
-                | id_term '[' god_exp ']'
-                | id_term '[' god_exp ',' god_exp ']' '''
+                  | id_term '[' god_exp ']'
+                  | id_term '[' god_exp ',' god_exp ']' '''
         if len(p) == 6:
             p[0] = Token([p[1][0], p[3], p[5]], p.lineno(1))
         elif len(p) == 4:
