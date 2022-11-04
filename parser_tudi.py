@@ -124,7 +124,7 @@ class ParserTudi(object):
         for var_id in p[2]:
             if not self.func_dir.add_variable(self.last_vars['scope'], var_id.value, self.last_vars['var_type']):
                 print(f'Error: Re-declaration of variable \'{var_id.value}\' at line: {var_id.lineno}')
-                exit()
+                raise Exception(f'Error: Re-declaration of variable \'{var_id.value}\' at line: {var_id.lineno}')
 
     # Lista de variables
     def p_list_vars(self, p):
@@ -244,7 +244,7 @@ class ParserTudi(object):
         if len(p) > 2:
             if not self.func_dir.find_function(p[1]):
                 print(f'Error: Function \'{p[1]}\' at line {p.lineno(1)} was not declared.')
-                exit()
+                raise Exception(f'Error: Function \'{p[1]}\' at line {p.lineno(1)} was not declared.')
         p[0] = [0, 'B', p[0]] # Dummy value in the meantime, need help obtaining data type
 
     # Llamada a un método, requisitos:
@@ -444,7 +444,7 @@ class ParserTudi(object):
         # Checa si la variable fue declarada con anterioridad
         if not self.func_dir.find_variable(self.last_vars['scope'], p[1][0]):
             print(f'Error: Variable \'{p[1]}\' at line {p.lineno(1)} was not declared.')
-            exit()
+            raise Exception(f'Error: Variable \'{p[1]}\' at line {p.lineno(1)} was not declared.')
         p[0] = [0, p[1][1], p[0]]
 
     # Identificador de la variable
@@ -461,7 +461,7 @@ class ParserTudi(object):
         self.last_vars['scope'] = p[-3]
         if not self.func_dir.add_function(self.last_vars['scope'], p[-1]):
             print(f'Error: Re-declaration of function \'{p[-3]}\'.')
-            exit()
+            raise Exception(f'Error: Re-declaration of function \'{p[-3]}\'.')
 
     def p_seen_param(self, p):
         '''seen_param :'''
@@ -471,7 +471,7 @@ class ParserTudi(object):
         # p[-2] es la producción en la que aparece el tipo de dato
         if not self.func_dir.add_param(self.last_vars['scope'], p[-1], p[-2]):
             print(f'Error: Re-declaration of function parameter \'{p[-1]}\'.')
-            exit()
+            raise Exception(f'Error: Re-declaration of function parameter \'{p[-1]}\'.')
 
     # Representa Epsilon
     def p_empty(self, p):
@@ -481,7 +481,7 @@ class ParserTudi(object):
     # Error handling
     def p_error(self, p):
         print("Syntax error in input at line: ", p, p.lineno)
-        exit()
+        raise Exception("Syntax error in input at line: ", p, p.lineno)
 
     # Build parser with initial state
     def build(self, lexer, **kwargs):
