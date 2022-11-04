@@ -5,6 +5,9 @@ from sem_cube import SemanticCube
 
 import ply.yacc as yacc
 
+tokens = LexerTudi.tokens
+literals = LexerTudi.literals
+
 class Quadruple():
     def __init__(self, operator, left_operand, right_operand, temp):
         global count_q
@@ -494,3 +497,16 @@ class ParserTudi(object):
     # Parse input data
     def parse(self, data):
         return self.parser.parse(data)
+# Por el momento esto es asi para poder "reiniciar" el directorio
+# y el scope a su estado inicial.
+def get_parser(withDebug=False):
+    global func_dir
+    func_dir = FunctionsDirectory()
+    
+    global last_vars
+    last_vars = {'scope': func_dir.GLOBAL_ENV, 'var_type': None}
+    
+    # "Reiniciar" el contador de lineas del lexer
+    lexer = LexerTudi()
+    lexer.build()
+    return yacc.yacc(debug=withDebug)
