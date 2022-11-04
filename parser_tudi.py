@@ -1,60 +1,14 @@
 from lexer import LexerTudi, Token
 from dir_vars import FunctionsDirectory
-from collections import deque
 from sem_cube import SemanticCube
+from quadruples import QuadrupleGenerator
 
 import ply.yacc as yacc
 
-tokens = LexerTudi.tokens
-literals = LexerTudi.literals
-
-class Quadruple():
-    def __init__(self, operator, left_operand, right_operand, temp):
-        global count_q
-        self.id = count_q
-        self.operator = operator
-        self.left_operand = left_operand
-        self.right_operand = right_operand
-        self.temp = temp
-        count_q += 1
-
-    def __str__(self):
-        return f'id: {self.id}, operator: {self.operator}, left_operand: {self.left_operand}, right_operand: {self.right_operand}, temp: {self.temp}\n'
-
-quadruples = []
-operator_stack = deque() 
-operand_stack = deque() 
-type_stack = deque() 
-goto_stack = deque() 
 sem_cube = SemanticCube()
-count_q = 1
+
 arr_relops = ['<', '<=', '==', '>', '>=', '!=']
 arr_logicops = ['y', 'o']
-type_dict = {'int': 'I', 'float': 'F', 'char': 'C', 'bool': 'B', 'arr1d': 'A'}
-temp_vars = 0
-
-def get_next_temp():
-    # On the meantime returns string, wait for memory implementation
-    global temp_vars
-    temp_vars +=1
-    return 'T' + str(temp_vars)
-
-def check_stack_operand(arr_operands):
-    if len(operator_stack) > 0 and (operator_stack[-1] in arr_operands):
-        right_oper = operand_stack.pop()
-        left_oper = operand_stack.pop()
-        right_type = type_stack.pop()
-        left_type = type_stack.pop()
-        operator = operator_stack.pop()
-        result_t = sem_cube.validate_expression(left_type, right_type, operator)
-
-        if result_t == "ERROR: Not valid operation":
-            raise Exception("TYPE MISMATCH")
-        t = get_next_temp()
-        quadruples.append(Quadruple(operator, left_oper, right_oper, t))
-        operand_stack.append(t)
-        result_t = type_dict[result_t]
-        type_stack.append(result_t)
 
 class ParserTudi(object):
     # Character literals y tokens necesarios para que el parser
@@ -82,8 +36,8 @@ class ParserTudi(object):
                 else:
                     print('\t-', func_item, ':', values)
             print()
-        for i in quadruples:
-            print(i)
+
+        self.quadruple_gen.print_quadruples()
 
     # Declaración de variables globales (opcional)
     def p_game_vars(self, p):
@@ -287,7 +241,7 @@ class ParserTudi(object):
 
     def p_while_act_1(self, p):
         '''while_act_1 : '''
-        goto_stack.append(len(quadruples))
+        # goto_stack.append(len(quadruples)
 
     # If condicional (C/C++ style)
     def p_conditional(self, p):
@@ -334,7 +288,7 @@ class ParserTudi(object):
 
     def p_god_exp_neuro_1(self, p):
         '''god_exp_neuro_1 : '''
-        check_stack_operand(arr_logicops)
+        self.quadruple_gen.check_stack_operand(arr_logicops, sem_cube
 
     # Operadores lógicos
     def p_god_exp_prima(self, p):
@@ -346,7 +300,7 @@ class ParserTudi(object):
 
     def p_super_exp_neuro_1(self, p):
         '''super_exp_neuro_1 : '''
-        check_stack_operand(arr_relops)
+        self.quadruple_gen.check_stack_operand(arr_relops, sem_cube)
 
     # Operadores relacionales
     def p_super_exp_prima(self, p):
@@ -358,7 +312,7 @@ class ParserTudi(object):
 
     def p_exp_neuro_1(self, p):
         '''exp_neuro_1 : '''
-        check_stack_operand(["+", "-"])
+        self.quadruple_gen.check_stack_operand(["+", "-"], sem_cube)
 
     # Operadores suma y resta
     def p_exp_prima(self, p):
@@ -371,7 +325,7 @@ class ParserTudi(object):
 
     def p_term_neuro_1(self, p):
         '''term_neuro_1 : '''
-        check_stack_operand(["*", "/"])
+        self.quadruple_gen.check_stack_operand(["*", "/"], sem_cube)
 
     # Operadores de multiplación y división
     def p_term_prima(self, p):
@@ -384,12 +338,12 @@ class ParserTudi(object):
     # - Variables y literals
     # - Llamadas a una función (lo que retorna)
     def p_fact(self, p):
-        '''fact : fact_neuro_1 '(' god_exp ')' fact_neuro_2
+        '''fact : '(' fact_neuro_1 god_exp ')' fact_neuro_2
                 | fact_constants '''
 
         if len(p) == 2:
-            operand_stack.append(p[1][0]) # aiuda
-            type_stack.append(p[1][1]) # aiuda
+            # (Type, operand)
+            self.quadruple_gen.add_operand(p[1][1], p[1][0])
         p[0] = p[1]
 
     # Variables, literals, y llamadas a una función
@@ -420,15 +374,18 @@ class ParserTudi(object):
 
     def p_add_op(self, p):
         '''add_op : '''
-        operator_stack.append(p[-1]) # Add previous operator to stack
+        # Add previous operator to stack
+        self.quadruple_gen.add_operator(p[-1])
 
     def p_fact_neuro_1(self, p):
         '''fact_neuro_1 :'''
-        operator_stack.append("|") # Fondo falso
+        # Fondo falso
+        self.quadruple_gen.add_operator("|")
 
     def p_fact_neuro_2(self, p):
         '''fact_neuro_2 :'''
-        operator_stack.pop() # Fin del fondo falso
+        # Fin del fondo falso
+        self.quadruple_gen.pop_operator()
 
     # Variables:
     # - Variable
@@ -490,6 +447,7 @@ class ParserTudi(object):
     def build(self, lexer, **kwargs):
         self.func_dir = FunctionsDirectory()
         self.last_vars = {'scope': self.func_dir.GLOBAL_ENV, 'var_type': None}
+        self.quadruple_gen = QuadrupleGenerator()
 
         self.lexer = lexer
         self.parser = yacc.yacc(module=self, **kwargs)
