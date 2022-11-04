@@ -288,7 +288,7 @@ class ParserTudi(object):
 
     def p_god_exp_neuro_1(self, p):
         '''god_exp_neuro_1 : '''
-        self.quadruple_gen.check_stack_operand(arr_logicops, sem_cube
+        self.quadruple_gen.check_stack_operand(arr_logicops, sem_cube)
 
     # Operadores lógicos
     def p_god_exp_prima(self, p):
