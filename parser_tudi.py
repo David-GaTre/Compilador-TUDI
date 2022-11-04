@@ -5,7 +5,6 @@ from sem_cube import SemanticCube
 
 import ply.yacc as yacc
 
-
 class Quadruple():
     def __init__(self, operator, left_operand, right_operand, temp):
         global count_q
@@ -55,10 +54,16 @@ def check_stack_operand(arr_operands):
         type_stack.append(result_t)
 
 class ParserTudi(object):
-
+    # Character literals y tokens necesarios para que el parser
+    # los conozca y los pueda interpretar en sus reglas
     tokens = LexerTudi.tokens
     literals = LexerTudi.literals
 
+    # Estructura general de un programa en TUDI:
+    # - Inicia con un ID para el nombre del juego
+    # - Asigna el tamaño (width, height) al canvas
+    # - Declaración de variables globales
+    # - Definición de funciones
     def p_game(self, p):
         '''game : GAME ID ';' CANVAS ASSIGN_OP INT_LITERAL ',' INT_LITERAL ';' game_vars game_funcs'''
         p[0] = "Aceptado"
@@ -77,42 +82,56 @@ class ParserTudi(object):
         for i in quadruples:
             print(i)
 
+    # Declaración de variables globales (opcional)
     def p_game_vars(self, p):
         '''game_vars : block_vars
                     | empty'''
 
+    # Definición de funciones:
+    # - Funciones definidas por el usuario (opcionales)
+    # - Llenar funciones Start y Update de TUDI (opcionales)
+    #   con código del usuario
     def p_game_funcs(self, p):
         '''game_funcs : declare_func game_funcs
                     | game_start'''
 
+    # Definición de función Start de TUDI (opcional)
+    # Continúa con función Update de TUDI
     def p_game_start(self, p):
         '''game_start : func_start game_update
                     | game_update'''
 
+    # Definición de función Update de TUDI (opcional)
     def p_game_update(self, p):
         '''game_update : func_update
                     | empty'''
 
+    # Bloque de declaración de variables
     def p_block_vars(self, p):
         '''block_vars : DECLARE '{' declare_vars '}' '''
 
+    # Declaración de variables (permite múltiples declaraciones)
     def p_declare_vars(self, p):
         '''declare_vars : declare_var declare_vars
                         | empty'''
 
+    # Declara 1 o más variables de un tipo de dato en común
     def p_declare_var(self, p):
         '''declare_var : type list_vars ';' '''
         self.last_vars['var_type'] = p[1]
 
+        # Checar por nombres de variables duplicadas en el scope actual
         for var_id in p[2]:
             if not self.func_dir.add_variable(self.last_vars['scope'], var_id.value, self.last_vars['var_type']):
                 print(f'Error: Re-declaration of variable \'{var_id.value}\' at line: {var_id.lineno}')
                 exit()
 
+    # Lista de variables
     def p_list_vars(self, p):
         '''list_vars : ID list_vars_prima'''
         p[0] = [Token(p[1], p.lineno(1))] + p[2]
 
+    # Añadir una variable a la lista de variables
     def p_list_vars_prima(self, p):
         '''list_vars_prima : ',' ID list_vars_prima
                         | empty'''
@@ -121,33 +140,55 @@ class ParserTudi(object):
         else:
             p[0] = []
 
+    # Función definida por el usuario, necesita de:
+    # - Un tipo de retorno
+    # - Una lista de parámetros
+    # - Código de la función
     def p_declare_func(self, p):
         '''declare_func : FUNC ID ':' func_type seen_dec_func '(' list_params ')' '{' block_code '}' '''
 
+    # Definición de función Start de TUDI:
+    # - Si está presente en el programa, la función Start es
+    #   la primera en ejecutarse
     def p_func_start(self, p):
         '''func_start : FUNC START ':' VOID seen_dec_func '(' ')' '{' block_code '}' '''
 
+    # Definición de función Update de TUDI:
+    # - Si está presente en el programa, la función Update es
+    #   la función que está siendo ejecutada constantemente (loop)
     def p_func_update(self, p):
         '''func_update : FUNC UPDATE ':' VOID seen_dec_func '(' ')' '{' block_code '}' '''
 
+    # Lista de parámetros de una función
     def p_list_params(self, p):
         '''list_params : type ID seen_param list_params_prima
                     | empty'''
 
+    # Añadir un parámetro a la lista de parámetros
     def p_list_params_prima(self, p):
         '''list_params_prima : ',' type ID seen_param list_params_prima
                             | empty'''
 
+    # Tipo de dato posible como retorno de una función:
+    # - Todos y VOID
     def p_func_type(self, p):
         '''func_type : type
                     | VOID '''
         p[0] = p[1]
 
+    # Bloque de código, puede incluir:
+    # - Bloque de declaración de variables
+    # - Estatutos
     def p_block_code(self, p):
         '''block_code : block_vars statement_prima
                     | statement statement_prima
                     | empty'''
 
+    # Un estatuto puede ser:
+    # - Llamada a una función o métodos
+    # - Ciclos o condicionales
+    # - Asignaciones
+    # - Estatuto de retorno
     def p_statement(self, p):
         '''statement : call_func ';'
                     | for_loop
@@ -157,59 +198,87 @@ class ParserTudi(object):
                     | return ';'
                     | call_method ';' '''
 
+    # Añadir un estatuto más
     def p_statement_prima(self, p):
         '''statement_prima : statement statement_prima
                         | empty'''
 
+    # Estatuto de retorno:
+    # - Regresa una expresión
     def p_return(self, p):
         '''return : RETURN god_exp'''
 
+    # Funciones built-in de I/O en TUDI:
+    # - Print: Muestra en consola el argumento provisto
+    # - Read: Pide input del usuario, como prompt utiliza
+    #         el argumento provisto. Retorna un string literal
     def p_io_func(self, p):
         '''io_func : PRINT '(' io_func_prima ')'
                 | READ  '(' io_func_prima ')' '''
 
+    # El argumento posible de una función I/O
     def p_io_func_prima(self, p):
         '''io_func_prima : STRING_LITERAL
                         | empty'''
 
+    # Funciones built-in de cast en TUDI:
+    # - Para los tipos de datos: int, float y bool
+    # - Reciben un string literal o un arreglo de chars
     def p_cast_func(self, p):
         '''cast_func : INT cast_func_prima
                     | FLOAT cast_func_prima
                     | BOOLEAN cast_func_prima'''
 
+    # El argumento posible de una función de cast:
+    # - String literal o arreglo de chars
     def p_cast_func_prima(self, p):
         '''cast_func_prima : '(' STRING_LITERAL ')'
                         | '(' god_exp ')' '''
 
+    # Llamada a una función
     def p_call_func(self, p):
         '''call_func : ID '(' list_args ')'
                     | io_func
                     | cast_func'''
+        # Checa que exista una función definida por el usuario
         if len(p) > 2:
             if not self.func_dir.find_function(p[1]):
                 print(f'Error: Function \'{p[1]}\' at line {p.lineno(1)} was not declared.')
                 exit()
         p[0] = [0, 'B', p[0]] # Dummy value in the meantime, need help obtaining data type
 
+    # Llamada a un método, requisitos:
+    # - Los únicos métodos en TUDI pertenecen a una variable de tipo sprite
     def p_call_method(self, p):
         '''call_method : id_exp '.' call_method_prima '(' list_args ')' '''
 
+    # Los métodos built-in en TUDI para el tipo de dato sprite:
+    # - SetPosition: Recibe dos floats,
+    #                correspondientes a las coordenadas (x, y)
+    # - Translate: Recibe dos floats,
+    #              desplaza el sprite en las dos dimensiones
+    # - SetControllable: Recibe un bool,
+    #                    define si el sprite puede ser manipulado por las teclas del usuario
     def p_call_method_prima(self, p):
         '''call_method_prima : SETPOSITION
                             | TRANSLATE
                             | SETCONTROLLABLE '''
 
+    # Lista de argumentos (expresiones)
     def p_list_args(self, p):
         '''list_args : god_exp list_args_prima
                     | empty'''
 
+    # Añadir un argumento a la lista de argumentos
     def p_list_args_prima(self, p):
         '''list_args_prima : ',' god_exp list_args_prima
                         | empty'''
 
+    # Ciclo for loop (C/C++ style)
     def p_for_loop(self, p):
         '''for_loop : FOR '(' assignment ';' god_exp ';' assignment ')' '{' block_code '}' '''
 
+    # Ciclo while clásico (C/C++ style)
     def p_while_loop(self, p):
         '''while_loop : WHILE while_act_1 '(' god_exp ')' '{' block_code '}' '''
 
@@ -217,17 +286,23 @@ class ParserTudi(object):
         '''while_act_1 : '''
         goto_stack.append(len(quadruples))
 
+    # If condicional (C/C++ style)
     def p_conditional(self, p):
         '''conditional : IF '(' god_exp ')' '{' block_code '}' conditional_prima'''
 
+    # Else-If / Else condicional (C/C++ style)
     def p_conditional_prima(self, p):
         '''conditional_prima : ELSE conditional
                             | ELSE '{' block_code '}'
                             | empty'''
 
+    # Asignación de una expresión a una variables:
+    # - Se debe verificar que los tipos de datos coincidan
     def p_assignment(self, p):
         '''assignment : id_exp ASSIGN_OP god_exp'''
 
+    # Tipos de datos en TUDI:
+    # - Pueden ser arreglos de 1 o 2 dimensiones
     def p_type(self, p):
         '''type : INT type_dims
                 | FLOAT type_dims
@@ -239,6 +314,8 @@ class ParserTudi(object):
         else:
             p[0] = p[1]
 
+    # En la declaración, los arreglos solamente
+    # aceptan int literals para la definición del tamaño
     def p_type_dims(self, p):
         '''type_dims : '[' INT_LITERAL ']'
                     | '[' INT_LITERAL ',' INT_LITERAL ']'
@@ -248,7 +325,7 @@ class ParserTudi(object):
         elif len(p) == 4:
             p[0] = 'arr1d'
 
-
+    # Expresión (lógica, relacional, aritmética)
     def p_god_exp(self, p):
         '''god_exp : super_exp god_exp_neuro_1 god_exp_prima'''
 
@@ -256,6 +333,7 @@ class ParserTudi(object):
         '''god_exp_neuro_1 : '''
         check_stack_operand(arr_logicops)
 
+    # Operadores lógicos
     def p_god_exp_prima(self, p):
         '''god_exp_prima : LOGIC_OPS add_op god_exp
                         | empty'''
@@ -267,6 +345,7 @@ class ParserTudi(object):
         '''super_exp_neuro_1 : '''
         check_stack_operand(arr_relops)
 
+    # Operadores relacionales
     def p_super_exp_prima(self, p):
         '''super_exp_prima : REL_OPS add_op exp
                         | empty'''
@@ -278,6 +357,7 @@ class ParserTudi(object):
         '''exp_neuro_1 : '''
         check_stack_operand(["+", "-"])
 
+    # Operadores suma y resta
     def p_exp_prima(self, p):
         '''exp_prima : '+' add_op exp
                     | '-' add_op exp
@@ -290,11 +370,16 @@ class ParserTudi(object):
         '''term_neuro_1 : '''
         check_stack_operand(["*", "/"])
 
+    # Operadores de multiplación y división
     def p_term_prima(self, p):
         '''term_prima : '/' add_op term
                     | '*' add_op term
                     | empty'''
 
+    # Factores de una expresión:
+    # - Operadores de agrupacion (paréntesis)
+    # - Variables y literals
+    # - Llamadas a una función (lo que retorna)
     def p_fact(self, p):
         '''fact : fact_neuro_1 '(' god_exp ')' fact_neuro_2
                 | fact_constants '''
@@ -304,7 +389,7 @@ class ParserTudi(object):
             type_stack.append(p[1][1]) # aiuda
         p[0] = p[1]
 
-
+    # Variables, literals, y llamadas a una función
     def p_fact_constants(self, p):
         '''
         fact_constants : id_exp
@@ -315,14 +400,17 @@ class ParserTudi(object):
         '''
         p[0] = p[1]
 
+    # Enteros
     def p_int(self, p):
         '''int : INT_LITERAL'''
         p[0] = [p[1], 'I'] # Dummy value on the meantime
 
+    # Flotantes
     def p_float(self, p):
         '''float : FLOAT_LITERAL'''
         p[0] = [p[1], 'F'] # Dummy value on the meantime
 
+    # Booleanos
     def p_bool(self, p):
         '''bool : BOOL_LITERAL'''
         p[0] = [p[1], 'B'] # Dummy value on the meantime
@@ -339,6 +427,9 @@ class ParserTudi(object):
         '''fact_neuro_2 :'''
         operator_stack.pop() # Fin del fondo falso
 
+    # Variables:
+    # - Variable
+    # - Elemento de un arreglo de 1 o 2 dimensiones
     def p_id_exp(self, p):
         '''id_exp : id_term
                 | id_term '[' god_exp ']'
@@ -350,11 +441,13 @@ class ParserTudi(object):
         else:
             p[0] = Token(p[1][0], p.lineno(1))
 
+        # Checa si la variable fue declarada con anterioridad
         if not self.func_dir.find_variable(self.last_vars['scope'], p[1][0]):
             print(f'Error: Variable \'{p[1]}\' at line {p.lineno(1)} was not declared.')
             exit()
         p[0] = [0, p[1][1], p[0]]
 
+    # Identificador de la variable
     def p_id_term(self, p):
         '''id_term : ID'''
         p[0] = [p[1], 'B'] # need help obtaining the type of the variable
@@ -380,14 +473,17 @@ class ParserTudi(object):
             print(f'Error: Re-declaration of function parameter \'{p[-1]}\'.')
             exit()
 
-    def p_empty(self, p): # representa epsilon
+    # Representa Epsilon
+    def p_empty(self, p):
         '''empty : '''
         pass
 
+    # Error handling
     def p_error(self, p):
         print("Syntax error in input at line: ", p, p.lineno)
         exit()
 
+    # Build parser with initial state
     def build(self, lexer, **kwargs):
         self.func_dir = FunctionsDirectory()
         self.last_vars = {'scope': self.func_dir.GLOBAL_ENV, 'var_type': None}
@@ -395,5 +491,6 @@ class ParserTudi(object):
         self.lexer = lexer
         self.parser = yacc.yacc(module=self, **kwargs)
 
+    # Parse input data
     def parse(self, data):
         return self.parser.parse(data)
