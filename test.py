@@ -1,15 +1,17 @@
 import unittest
 import os
 
-from parser_tudi import get_parser
+from lexer import LexerTudi
+from parser_tudi import ParserTudi
 
 class TestTUDI(unittest.TestCase):
     def setUp(self):
         self.folder = "test_cases"
-        self.parser = get_parser()
+        self.lexer = LexerTudi()
+        self.lexer.build()
 
-    def tearDown(self):
-        self.parser.restart()
+        self.parser = ParserTudi()
+        self.parser.build(self.lexer)
 
     def test_tudi(self):
         f = open(os.path.join(self.folder, "test.tudi"), 'r')
