@@ -6,6 +6,7 @@ from quadruples import QuadrupleGenerator
 import ply.yacc as yacc
 
 sem_cube = SemanticCube()
+
 arr_relops = ['<', '<=', '==', '>', '>=', '!=']
 arr_logicops = ['y', 'o']
 
@@ -240,7 +241,7 @@ class ParserTudi(object):
 
     def p_while_act_1(self, p):
         '''while_act_1 : '''
-        # goto_stack.append(len(quadruples))
+        # goto_stack.append(len(quadruples)
 
     # If condicional (C/C++ style)
     def p_conditional(self, p):
@@ -287,7 +288,7 @@ class ParserTudi(object):
 
     def p_god_exp_neuro_1(self, p):
         '''god_exp_neuro_1 : '''
-        self.quadruple_gen.check_stack_operand(arr_logicops, sem_cube)
+        self.quadruple_gen.check_stack_operand(arr_logicops, sem_cube
 
     # Operadores lógicos
     def p_god_exp_prima(self, p):
