@@ -25,13 +25,11 @@ operand_stack = deque()
 type_stack = deque() 
 goto_stack = deque() 
 sem_cube = SemanticCube()
-func_dir = FunctionsDirectory()
 count_q = 1
 arr_relops = ['<', '<=', '==', '>', '>=', '!=']
 arr_logicops = ['y', 'o']
 type_dict = {'int': 'I', 'float': 'F', 'char': 'C', 'bool': 'B', 'arr1d': 'A'}
 temp_vars = 0
-last_vars = {'scope': func_dir.GLOBAL_ENV, 'var_type': None}
 
 def get_next_temp():
     # On the meantime returns string, wait for memory implementation
@@ -66,8 +64,7 @@ class ParserTudi(object):
         p[0] = "Aceptado"
         print("Todo valido")
 
-        global func_dir
-        for func, func_items in func_dir.directory.items():
+        for func, func_items in self.func_dir.directory.items():
             print('Scope:', func)
             for func_item, values in func_items.items():
                 if func_item == 'table':
@@ -105,11 +102,10 @@ class ParserTudi(object):
 
     def p_declare_var(self, p):
         '''declare_var : type list_vars ';' '''
-        global last_vars
-        last_vars['var_type'] = p[1]
+        self.last_vars['var_type'] = p[1]
 
         for var_id in p[2]:
-            if not func_dir.add_variable(last_vars['scope'], var_id.value, last_vars['var_type']):
+            if not self.func_dir.add_variable(self.last_vars['scope'], var_id.value, self.last_vars['var_type']):
                 print(f'Error: Re-declaration of variable \'{var_id.value}\' at line: {var_id.lineno}')
                 exit()
 
@@ -190,7 +186,7 @@ class ParserTudi(object):
                     | io_func
                     | cast_func'''
         if len(p) > 2:
-            if not func_dir.find_function(p[1]):
+            if not self.func_dir.find_function(p[1]):
                 print(f'Error: Function \'{p[1]}\' at line {p.lineno(1)} was not declared.')
                 exit()
         p[0] = [0, 'B', p[0]] # Dummy value in the meantime, need help obtaining data type
@@ -354,7 +350,7 @@ class ParserTudi(object):
         else:
             p[0] = Token(p[1][0], p.lineno(1))
 
-        if not func_dir.find_variable(last_vars['scope'], p[1][0]):
+        if not self.func_dir.find_variable(self.last_vars['scope'], p[1][0]):
             print(f'Error: Variable \'{p[1]}\' at line {p.lineno(1)} was not declared.')
             exit()
         p[0] = [0, p[1][1], p[0]]
@@ -369,9 +365,8 @@ class ParserTudi(object):
         # la declaración de una función.
         # p[-1] es la producción en la que aparece el tipo de retorno
         # p[-3] es la producción en la que aparece el nombre de la función
-        global last_vars
-        last_vars['scope'] = p[-3]
-        if not func_dir.add_function(last_vars['scope'], p[-1]):
+        self.last_vars['scope'] = p[-3]
+        if not self.func_dir.add_function(self.last_vars['scope'], p[-1]):
             print(f'Error: Re-declaration of function \'{p[-3]}\'.')
             exit()
 
@@ -381,7 +376,7 @@ class ParserTudi(object):
         # la declaración de un parámetro.
         # p[-1] es la producción en la que aparece nombre del parámetro
         # p[-2] es la producción en la que aparece el tipo de dato
-        if not func_dir.add_param(last_vars['scope'], p[-1], p[-2]):
+        if not self.func_dir.add_param(self.last_vars['scope'], p[-1], p[-2]):
             print(f'Error: Re-declaration of function parameter \'{p[-1]}\'.')
             exit()
 
@@ -394,11 +389,8 @@ class ParserTudi(object):
         exit()
 
     def build(self, lexer, **kwargs):
-        global func_dir
-        func_dir = FunctionsDirectory()
-
-        global last_vars
-        last_vars = {'scope': func_dir.GLOBAL_ENV, 'var_type': None}
+        self.func_dir = FunctionsDirectory()
+        self.last_vars = {'scope': self.func_dir.GLOBAL_ENV, 'var_type': None}
 
         self.lexer = lexer
         self.parser = yacc.yacc(module=self, **kwargs)
