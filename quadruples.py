@@ -1,6 +1,6 @@
 from collections import deque
 
-type_dict = {'int': 'I', 'float': 'F', 'char': 'C', 'bool': 'B', 'arr1d': 'A'}
+type_dict = {'int': 'I', 'float': 'F', 'char': 'C', 'bool': 'B', 'arr1d': 'A', 'sprite': 'S'}
 
 class QuadrupleGenerator():
     def __init__(self):
@@ -64,6 +64,30 @@ class QuadrupleGenerator():
             self.operand_stack.append(t)
             self.type_stack.append(result_t)
 
+    def finish_expression(self, sem_cube):
+        while len(self.operator_stack) > 0 and self.operator_stack[-1] != "|":
+            right_oper = self.operand_stack.pop()
+            right_type = self.type_stack.pop()
+
+            left_oper = self.operand_stack.pop()
+            left_type = self.type_stack.pop()
+
+            operator = self.operator_stack.pop()
+
+            result_t = sem_cube.validate_expression(left_type, right_type, operator)
+
+            if result_t == "ERROR: Not valid operation":
+                raise Exception("TYPE MISMATCH")
+
+            t = self.get_next_temp()
+
+            self.quadruples.append(Quadruple(self.count_q, operator, left_oper, right_oper, t))
+            self.count_q += 1
+
+            result_t = type_dict[result_t]
+            self.operand_stack.append(t)
+            self.type_stack.append(result_t)
+
     def print_quadruples(self):
         for i in self.quadruples:
             print(i)
@@ -77,4 +101,12 @@ class Quadruple():
         self.temp = temp
 
     def __str__(self):
-        return f'id: {self.id}, operator: {self.operator}, left_operand: {self.left_operand}, right_operand: {self.right_operand}, temp: {self.temp}\n'
+        return f'{self.id}: [{self.operator}, {self.left_operand}, {self.right_operand}, {self.temp}]'
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __eq__(self, other):
+        if not isinstance(other, Quadruple):
+            return False
+        return self.__str__() == other.__str__()
