@@ -102,3 +102,11 @@ class Quadruple():
 
     def __str__(self):
         return f'{self.id}: [{self.operator}, {self.left_operand}, {self.right_operand}, {self.temp}]'
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __eq__(self, other):
+        if not isinstance(other, Quadruple):
+            return False
+        return self.__str__() == other.__str__()
