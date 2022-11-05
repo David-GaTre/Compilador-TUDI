@@ -1,7 +1,7 @@
 from lexer import LexerTudi, Token
 from dir_vars import FunctionsDirectory
 from sem_cube import SemanticCube
-from quadruples import QuadrupleGenerator
+from quadruples import QuadrupleGenerator, type_dict
 
 import ply.yacc as yacc
 
@@ -163,7 +163,7 @@ class ParserTudi(object):
     # Estatuto de retorno:
     # - Regresa una expresión
     def p_return(self, p):
-        '''return : RETURN god_exp'''
+        '''return : RETURN god_exp seen_god_exp '''
 
     # Funciones built-in de I/O en TUDI:
     # - Print: Muestra en consola el argumento provisto
@@ -190,7 +190,7 @@ class ParserTudi(object):
     # - String literal o arreglo de chars
     def p_cast_func_prima(self, p):
         '''cast_func_prima : '(' STRING_LITERAL ')'
-                           | '(' god_exp ')' '''
+                           | '(' god_exp seen_god_exp ')' '''
 
     # Llamada a una función
     def p_call_func(self, p):
@@ -202,7 +202,7 @@ class ParserTudi(object):
             if not self.func_dir.find_function(p[1]):
                 print(f'Error: Function \'{p[1]}\' at line {p.lineno(1)} was not declared.')
                 raise Exception(f'Error: Function \'{p[1]}\' at line {p.lineno(1)} was not declared.')
-        p[0] = [0, 'B', p[0]] # Dummy value in the meantime, need help obtaining data type
+        p[0] = [p[1], 'B', p[0]] # Dummy value in the meantime, need help obtaining data type
 
     # Llamada a un método, requisitos:
     # - Los únicos métodos en TUDI pertenecen a una variable de tipo sprite
@@ -223,21 +223,21 @@ class ParserTudi(object):
 
     # Lista de argumentos (expresiones)
     def p_list_args(self, p):
-        '''list_args : god_exp list_args_prima
+        '''list_args : god_exp seen_god_exp list_args_prima
                      | empty'''
 
     # Añadir un argumento a la lista de argumentos
     def p_list_args_prima(self, p):
-        '''list_args_prima : ',' god_exp list_args_prima
+        '''list_args_prima : ',' god_exp seen_god_exp list_args_prima
                            | empty'''
 
     # Ciclo for loop (C/C++ style)
     def p_for_loop(self, p):
-        '''for_loop : FOR '(' assignment ';' god_exp ';' assignment ')' '{' block_code '}' '''
+        '''for_loop : FOR '(' assignment ';' god_exp seen_god_exp ';' assignment ')' '{' block_code '}' '''
 
     # Ciclo while clásico (C/C++ style)
     def p_while_loop(self, p):
-        '''while_loop : WHILE while_act_1 '(' god_exp ')' '{' block_code '}' '''
+        '''while_loop : WHILE while_act_1 '(' god_exp seen_god_exp ')' '{' block_code '}' '''
 
     def p_while_act_1(self, p):
         '''while_act_1 : '''
@@ -245,7 +245,7 @@ class ParserTudi(object):
 
     # If condicional (C/C++ style)
     def p_conditional(self, p):
-        '''conditional : IF '(' god_exp ')' '{' block_code '}' conditional_prima'''
+        '''conditional : IF '(' god_exp seen_god_exp ')' '{' block_code '}' conditional_prima'''
 
     # Else-If / Else condicional (C/C++ style)
     def p_conditional_prima(self, p):
@@ -256,7 +256,7 @@ class ParserTudi(object):
     # Asignación de una expresión a una variables:
     # - Se debe verificar que los tipos de datos coincidan
     def p_assignment(self, p):
-        '''assignment : id_exp ASSIGN_OP god_exp'''
+        '''assignment : id_exp ASSIGN_OP god_exp seen_god_exp '''
 
     # Tipos de datos en TUDI:
     # - Pueden ser arreglos de 1 o 2 dimensiones
@@ -266,10 +266,12 @@ class ParserTudi(object):
                 | BOOLEAN type_dims
                 | CHAR type_dims
                 | SPRITE type_dims'''
-        if p[2] is not None:
-            p[0] = "-".join([p[1], p[2]])
-        else:
-            p[0] = p[1]
+        # TODO: Implementar arreglos correctamente
+        # if p[2] is not None:
+        #     p[0] = "-".join([p[1], p[2]])
+        # else:
+        #     p[0] = p[1]
+        p[0] = p[1]
 
     # En la declaración, los arreglos solamente
     # aceptan int literals para la definición del tamaño
@@ -284,53 +286,60 @@ class ParserTudi(object):
 
     # Expresión (lógica, relacional, aritmética)
     def p_god_exp(self, p):
-        '''god_exp : super_exp god_exp_neuro_1 god_exp_prima'''
+        '''god_exp : super_exp seen_super_exp god_exp_prima'''
+        self.quadruple_gen.finish_expression(sem_cube)
 
-    def p_god_exp_neuro_1(self, p):
-        '''god_exp_neuro_1 : '''
+    def p_seen_god_exp(self, p):
+        '''seen_god_exp : '''
+        # TODO: Hacer quads de funciones, asignación, etc.
+        # Por el momento eliminar la expresion de los stacks
+        self.quadruple_gen.pop_operand()
+
+    def p_seen_super_exp(self, p):
+        '''seen_super_exp : '''
         self.quadruple_gen.check_stack_operand(arr_logicops, sem_cube)
 
     # Operadores lógicos
     def p_god_exp_prima(self, p):
-        '''god_exp_prima : LOGIC_OPS add_op god_exp
+        '''god_exp_prima : LOGIC_OPS seen_op god_exp
                          | empty'''
 
     def p_super_exp(self, p):
-        '''super_exp : exp super_exp_neuro_1 super_exp_prima'''
+        '''super_exp : exp super_exp_prima seen_exp'''
 
-    def p_super_exp_neuro_1(self, p):
-        '''super_exp_neuro_1 : '''
+    def p_seen_exp(self, p):
+        '''seen_exp : '''
         self.quadruple_gen.check_stack_operand(arr_relops, sem_cube)
 
     # Operadores relacionales
     def p_super_exp_prima(self, p):
-        '''super_exp_prima : REL_OPS add_op exp
+        '''super_exp_prima : REL_OPS seen_op exp
                            | empty'''
 
     def p_exp(self, p):
-        '''exp : term exp_neuro_1 exp_prima'''
+        '''exp : term seen_term exp_prima'''
 
-    def p_exp_neuro_1(self, p):
-        '''exp_neuro_1 : '''
+    def p_seen_term(self, p):
+        '''seen_term : '''
         self.quadruple_gen.check_stack_operand(["+", "-"], sem_cube)
 
     # Operadores suma y resta
     def p_exp_prima(self, p):
-        '''exp_prima : '+' add_op exp
-                     | '-' add_op exp
+        '''exp_prima : '+' seen_op exp
+                     | '-' seen_op exp
                      | empty'''
 
     def p_term(self, p):
-        '''term : fact term_neuro_1 term_prima'''
+        '''term : fact seen_fact term_prima'''
 
-    def p_term_neuro_1(self, p):
-        '''term_neuro_1 : '''
+    def p_seen_fact(self, p):
+        '''seen_fact : '''
         self.quadruple_gen.check_stack_operand(["*", "/"], sem_cube)
 
     # Operadores de multiplación y división
     def p_term_prima(self, p):
-        '''term_prima : '/' add_op term
-                      | '*' add_op term
+        '''term_prima : '/' seen_op term
+                      | '*' seen_op term
                       | empty'''
 
     # Factores de una expresión:
@@ -338,7 +347,7 @@ class ParserTudi(object):
     # - Variables y literals
     # - Llamadas a una función (lo que retorna)
     def p_fact(self, p):
-        '''fact : '(' fact_neuro_1 god_exp ')' fact_neuro_2
+        '''fact : '(' seen_fact_open god_exp ')' seen_fact_close
                 | fact_constants '''
 
         if len(p) == 2:
@@ -360,30 +369,30 @@ class ParserTudi(object):
     # Enteros
     def p_int(self, p):
         '''int : INT_LITERAL'''
-        p[0] = [p[1], 'I'] # Dummy value on the meantime
+        p[0] = [p[1], 'I']
 
     # Flotantes
     def p_float(self, p):
         '''float : FLOAT_LITERAL'''
-        p[0] = [p[1], 'F'] # Dummy value on the meantime
+        p[0] = [p[1], 'F']
 
     # Booleanos
     def p_bool(self, p):
         '''bool : BOOL_LITERAL'''
-        p[0] = [p[1], 'B'] # Dummy value on the meantime
+        p[0] = [p[1], 'B']
 
-    def p_add_op(self, p):
-        '''add_op : '''
+    def p_seen_op(self, p):
+        '''seen_op : '''
         # Add previous operator to stack
         self.quadruple_gen.add_operator(p[-1])
 
-    def p_fact_neuro_1(self, p):
-        '''fact_neuro_1 :'''
+    def p_seen_fact_open(self, p):
+        '''seen_fact_open :'''
         # Fondo falso
         self.quadruple_gen.add_operator("|")
 
-    def p_fact_neuro_2(self, p):
-        '''fact_neuro_2 :'''
+    def p_seen_fact_close(self, p):
+        '''seen_fact_close :'''
         # Fin del fondo falso
         self.quadruple_gen.pop_operator()
 
@@ -391,26 +400,23 @@ class ParserTudi(object):
     # - Variable
     # - Elemento de un arreglo de 1 o 2 dimensiones
     def p_id_exp(self, p):
-        '''id_exp : id_term
-                  | id_term '[' god_exp ']'
-                  | id_term '[' god_exp ',' god_exp ']' '''
-        if len(p) == 6:
-            p[0] = Token([p[1][0], p[3], p[5]], p.lineno(1))
-        elif len(p) == 4:
-            p[0] = Token([p[1][0], p[3]], p.lineno(1))
+        '''id_exp : ID
+                  | ID '[' seen_fact_open god_exp seen_god_exp ']' seen_fact_close
+                  | ID '[' seen_fact_open god_exp seen_god_exp seen_fact_close ',' seen_fact_open god_exp seen_god_exp ']' seen_fact_close '''
+        if len(p) == 13:
+            p[0] = Token([p[1], p[4], p[9]], p.lineno(1))
+        elif len(p) == 8:
+            p[0] = Token([p[1], p[4]], p.lineno(1))
         else:
-            p[0] = Token(p[1][0], p.lineno(1))
+            p[0] = Token([p[1]], p.lineno(1))
 
         # Checa si la variable fue declarada con anterioridad
-        if not self.func_dir.find_variable(self.last_vars['scope'], p[1][0]):
+        if not self.func_dir.find_variable(self.last_vars['scope'], p[1]):
             print(f'Error: Variable \'{p[1]}\' at line {p.lineno(1)} was not declared.')
             raise Exception(f'Error: Variable \'{p[1]}\' at line {p.lineno(1)} was not declared.')
-        p[0] = [0, p[1][1], p[0]]
 
-    # Identificador de la variable
-    def p_id_term(self, p):
-        '''id_term : ID'''
-        p[0] = [p[1], 'B'] # need help obtaining the type of the variable
+        var = {"name": p[1]} | self.func_dir.find_variable(self.last_vars['scope'], p[1])
+        p[0] = [p[1], type_dict[var["type"]]]
 
     def p_seen_dec_func(self, p):
         '''seen_dec_func :'''
