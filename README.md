@@ -1,5 +1,11 @@
 # TUDI
 
+## Avance 4
+Se implementa la generación de cuadruplos para expresiones aritméticas, relacionales y lógicas. 
+Se implementa una más estructurada suite de testing. En la que se checa que la sintaxis funcione y los cuadruplos sean los esperados.
+
+Se trabaja en terminar la generación de cuadruplos para estatutos secuenciales, condicionales y ciclos
+
 ## Avance 3
 Se corrige un error en la gramática de las expresiones relacionales (<, <=, ==, !=, >=, >). Se agrega la primera iteración del cubo semántico.
 
