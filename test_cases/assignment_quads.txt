@@ -1,0 +1,10 @@
+*,2,3,T1
+/,T1,2,T2
++,1,T2,T3
++,T3,DoSomethingA,T4
+-,DoSomethingA,2,T5
+/,DoSomethingA,2,T6
++,1,2,T7
+*,2,2,T8
++,DoSomethingA,1,T9
+-,DoSomethingA,1,T10

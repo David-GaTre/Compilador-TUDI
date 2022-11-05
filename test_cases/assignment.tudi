@@ -1,0 +1,26 @@
+game test;
+canvas = 10, 10;
+
+declare {
+    float num;
+    int[3] vec;
+    int[5, 5] mat;
+    int yoyoooy;
+    int yyyy;
+}
+
+func DoSomethingA : int () {
+    return 2;
+}
+
+func Start : void () {
+    num = 1;
+    num = 1 + 2 * 3 / 2 + DoSomethingA();
+
+    vec[DoSomethingA() - 2] = 0;
+    vec[DoSomethingA() / 2] = 1;
+    vec[DoSomethingA()] = 2;
+
+    mat[1 + 2, 2 * 2] = 34;
+    mat[DoSomethingA() + 1, DoSomethingA() - 1] = 31;
+}

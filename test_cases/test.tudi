@@ -20,7 +20,7 @@ func DoSomethingB : sprite[1,1] (int pos_x, int pos_y) {
     }
     s.SetPosition(0.0, 0.0);
     s.Translate(5, 0 - 1);
-    s.SetControllable(True);
+    s.SetControllable(true);
     return s[1,1];
 }
 

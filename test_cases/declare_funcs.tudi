@@ -1,0 +1,49 @@
+game test;
+canvas = 10, 10;
+
+func DoSomethingInt : int (int a, int b, int c) {
+    return a * 3 + b - c * 2;
+}
+
+func DoSomethingFloat : float (float num) {
+    return num / 2;
+}
+
+func DoSomethingBoolean : bool (bool idempotent) {
+    return idempotent o true o false y true >= 2;
+}
+
+func DoSomethingChar : char (char digit) {
+    return digit;
+}
+
+func DoSomethingSprite : sprite (sprite avatar) {
+    return avatar;
+}
+
+func DoSomethingVector : int[3] (int a, int b, int c) {
+    declare {
+        int[3] vec;
+        int ooo;
+    }
+
+    vec[0] = a;
+    vec[1] = b;
+    vec[2] = c;
+
+    return vec;
+}
+
+func DoSomethingTable : int[5, 5] (int[5, 5] mat) {
+    mat[2, 2] = 0;
+
+    return mat;
+}
+
+func DoSomethingVoid : void () {
+    Print("Nothing");
+}
+
+func Start : void () {}
+
+func Update : void () {}
