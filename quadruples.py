@@ -30,6 +30,10 @@ class QuadrupleGenerator():
         self.type_stack.append(type_t)
         self.operand_stack.append(operand)
 
+    def add_quad_from_parser(self, operator, left_operand, right_operand, temp):
+        self.quadruples.append(Quadruple(self.count_q, operator, left_operand, right_operand, temp))
+        self.count_q += 1 
+
     # Regresa y elimina el tipo y operando más recientes de las pilas correspondientes
     def pop_operand(self):
         return self.type_stack.pop(), self.operand_stack.pop()
