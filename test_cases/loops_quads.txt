@@ -1,7 +1,17 @@
 <,i,5,T1
+GOTO_F,T1,None,5
 *,i,2,T2
+GOTO,None,None,1
 <,i,5,T3
+GOTO_F,T3,None,18
+GOTO_V,T3,None,10
 +,i,1,T4
+GOTO,None,None,5
 <,j,five,T5
+GOTO_F,T5,None,17
+GOTO_V,T5,None,15
 +,j,1,T6
+GOTO,None,None,10
 +,i,j,T7
+GOTO,None,None,13
+GOTO,None,None,8
