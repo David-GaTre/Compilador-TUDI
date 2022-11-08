@@ -102,19 +102,19 @@ class ParserTudi(object):
     # - Una lista de parámetros
     # - Código de la función
     def p_declare_func(self, p):
-        '''declare_func : FUNC ID ':' func_type seen_dec_func '(' list_params ')' '{' block_code '}' '''
+        '''declare_func : FUNC ID ':' func_type seen_dec_func '(' list_params ')' '{' block_vars_code '}' '''
 
     # Definición de función Start de TUDI:
     # - Si está presente en el programa, la función Start es
     #   la primera en ejecutarse
     def p_func_start(self, p):
-        '''func_start : FUNC START ':' VOID seen_dec_func '(' ')' '{' block_code '}' '''
+        '''func_start : FUNC START ':' VOID seen_dec_func '(' ')' '{' block_vars_code '}' '''
 
     # Definición de función Update de TUDI:
     # - Si está presente en el programa, la función Update es
     #   la función que está siendo ejecutada constantemente (loop)
     def p_func_update(self, p):
-        '''func_update : FUNC UPDATE ':' VOID seen_dec_func '(' ')' '{' block_code '}' '''
+        '''func_update : FUNC UPDATE ':' VOID seen_dec_func '(' ')' '{' block_vars_code '}' '''
 
     # Lista de parámetros de una función
     def p_list_params(self, p):
@@ -133,12 +133,18 @@ class ParserTudi(object):
                      | VOID '''
         p[0] = p[1]
 
-    # Bloque de código, puede incluir:
+    # Bloque de código con posibles variables, puede incluir:
     # - Bloque de declaración de variables
     # - Estatutos
+    def p_block_vars_code(self, p):
+        '''block_vars_code : block_vars statement_prima
+                           | statement statement_prima
+                           | empty'''
+
+    # Bloque de código solamente, puede incluir:
+    # - Estatutos
     def p_block_code(self, p):
-        '''block_code : block_vars statement_prima
-                      | statement statement_prima
+        '''block_code : statement statement_prima
                       | empty'''
 
     # Un estatuto puede ser:
@@ -172,7 +178,7 @@ class ParserTudi(object):
     def p_io_func(self, p):
         '''io_func : PRINT '(' io_func_prima ')'
                    | READ  '(' io_func_prima ')' '''
-        self.quadruple_gen.add_quad_from_parser(p[1], None, None, None)
+        # self.quadruple_gen.add_quad_from_parser(p[1], None, None, None)
 
     # El argumento posible de una función I/O
     def p_io_func_prima(self, p):
@@ -235,57 +241,55 @@ class ParserTudi(object):
     # Ciclo for loop (C/C++ style)
     def p_for_loop(self, p):
         '''for_loop : FOR '(' assignment ';' for_neuro_1 god_exp for_neuro_2 ';' assignment ')' '{' block_code '}' for_neuro_3 '''
-        # Misses scope
     
     def p_for_neuro_1(self, p):
         '''for_neuro_1 : '''
-        self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples))
+        # self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples))
 
     def p_for_neuro_2(self, p):
         '''for_neuro_2 : '''
-        c_type, operand  = self.quadruple_gen.pop_operand()
-        #if god_exp_type != 'B':
-        #    raise Exception("Type mismatch, expecting a B type, instead got {} type.".format(str(god_exp_type)))
-        self.quadruple_gen.add_quad_from_parser("GOTO_F", operand, None, None)
-        self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples)-1)
+        # c_type, operand  = self.quadruple_gen.pop_operand()
+        # #if god_exp_type != 'B':
+        # #    raise Exception("Type mismatch, expecting a B type, instead got {} type.".format(str(god_exp_type)))
+        # self.quadruple_gen.add_quad_from_parser("GOTO_F", operand, None, None)
+        # self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples)-1)
 
     def p_for_neuro_3(self, p):
         '''for_neuro_3 : '''
-        step = self.quadruple_gen.goto_stack.pop()
-        reference = self.quadruple_gen.goto_stack.pop()
-        quads = p[-5]
-        # Finish assignment
-        #for q in quads:
-        #    self.quadruple_gen.add_quad_from_parser(q)
-        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, reference)
-        s_quad = self.quadruple_gen.quadruples[step]
-        self.quadruple_gen.quadruples[step] = Quadruple(step+1, s_quad.operator, s_quad.left_operand, None, len(self.quadruple_gen.quadruples)+1)
+        # step = self.quadruple_gen.goto_stack.pop()
+        # reference = self.quadruple_gen.goto_stack.pop()
+        # quads = p[-5]
+        # # Finish assignment
+        # #for q in quads:
+        # #    self.quadruple_gen.add_quad_from_parser(q)
+        # self.quadruple_gen.add_quad_from_parser("GOTO", None, None, reference)
+        # s_quad = self.quadruple_gen.quadruples[step]
+        # self.quadruple_gen.quadruples[step] = Quadruple(step+1, s_quad.operator, s_quad.left_operand, None, len(self.quadruple_gen.quadruples)+1)
 
 
     # Ciclo while clásico (C/C++ style)
     def p_while_loop(self, p):
         '''while_loop : WHILE while_neuro_1 '(' god_exp while_neuro_2 ')' '{' block_code '}' while_neuro_3 '''
-        # Misses scope
 
     def p_while_neuro_1(self, p):
         '''while_neuro_1 : '''
-        self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples))
+        # self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples))
 
     def p_while_neuro_2(self, p):
         '''while_neuro_2 : '''
-        c_type, operand  = self.quadruple_gen.pop_operand()
-        #if god_exp_type != 'B':
-        #    raise Exception("Type mismatch, expecting a B type, instead got {} type.".format(str(god_exp_type)))
-        self.quadruple_gen.add_quad_from_parser("GOTO_F", operand, None, None)
-        self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples)-1)
+        # c_type, operand  = self.quadruple_gen.pop_operand()
+        # #if god_exp_type != 'B':
+        # #    raise Exception("Type mismatch, expecting a B type, instead got {} type.".format(str(god_exp_type)))
+        # self.quadruple_gen.add_quad_from_parser("GOTO_F", operand, None, None)
+        # self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples)-1)
 
     def p_while_neuro_3(self, p):
         '''while_neuro_3 : '''
-        step = self.quadruple_gen.goto_stack.pop()
-        reference = self.quadruple_gen.goto_stack.pop()
-        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, reference)
-        s_quad = self.quadruple_gen.quadruples[step]
-        self.quadruple_gen.quadruples[step] = Quadruple(step+1, s_quad.operator, s_quad.left_operand, None, len(self.quadruple_gen.quadruples)+1)
+        # step = self.quadruple_gen.goto_stack.pop()
+        # reference = self.quadruple_gen.goto_stack.pop()
+        # self.quadruple_gen.add_quad_from_parser("GOTO", None, None, reference)
+        # s_quad = self.quadruple_gen.quadruples[step]
+        # self.quadruple_gen.quadruples[step] = Quadruple(step+1, s_quad.operator, s_quad.left_operand, None, len(self.quadruple_gen.quadruples)+1)
 
     # If condicional (C/C++ style)
     def p_conditional(self, p):
@@ -299,25 +303,25 @@ class ParserTudi(object):
 
     def p_conditional_neuro_1(self, p):
         '''conditional_neuro_1 : '''
-        god_exp_type, operand  = self.quadruple_gen.pop_operand()
-        #if god_exp_type != 'B':
-        #    raise Exception("Type mismatch, expecting a B type, instead got {} type.".format(str(god_exp_type)))
-        self.quadruple_gen.add_quad_from_parser("GOTO_F", operand, None, None)
-        self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples)-1)
+        # god_exp_type, operand  = self.quadruple_gen.pop_operand()
+        # #if god_exp_type != 'B':
+        # #    raise Exception("Type mismatch, expecting a B type, instead got {} type.".format(str(god_exp_type)))
+        # self.quadruple_gen.add_quad_from_parser("GOTO_F", operand, None, None)
+        # self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples)-1)
 
     def p_conditional_neuro_2(self, p):
         '''conditional_neuro_2 : '''
-        step = self.quadruple_gen.goto_stack.pop()
-        s_quad = self.quadruple_gen.quadruples[step]
-        self.quadruple_gen.quadruples[step] = Quadruple(step+1, s_quad.operator, s_quad.left_operand, None, len(self.quadruple_gen.quadruples)+1)
+        # step = self.quadruple_gen.goto_stack.pop()
+        # s_quad = self.quadruple_gen.quadruples[step]
+        # self.quadruple_gen.quadruples[step] = Quadruple(step+1, s_quad.operator, s_quad.left_operand, None, len(self.quadruple_gen.quadruples)+1)
 
     def p_conditional_neuro_3(self, p):
         '''conditional_neuro_3 : '''
-        step = self.quadruple_gen.goto_stack.pop()
-        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, None)
-        self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples)-1)
-        s_quad = self.quadruple_gen.quadruples[step]
-        self.quadruple_gen.quadruples[step] = Quadruple(step+1, "GOTO_F", s_quad.left_operand, None, len(self.quadruple_gen.quadruples)+1)
+        # step = self.quadruple_gen.goto_stack.pop()
+        # self.quadruple_gen.add_quad_from_parser("GOTO", None, None, None)
+        # self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples)-1)
+        # s_quad = self.quadruple_gen.quadruples[step]
+        # self.quadruple_gen.quadruples[step] = Quadruple(step+1, "GOTO_F", s_quad.left_operand, None, len(self.quadruple_gen.quadruples)+1)
 
 
     # Asignación de una expresión a una variables:
