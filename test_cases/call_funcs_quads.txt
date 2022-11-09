@@ -3,9 +3,9 @@
 /,num,2,T3
 +,pos_x,1,T4
 -,pos_y,1,T5
-PRINT,None,None,None
-PRINT,None,None,None
-READ,None,None,None
-READ,None,None,None
-PRINT,None,None,None
-PRINT,None,None,None
+Print,None,None,None
+Print,None,None,None
+Read,None,None,None
+Read,None,None,None
+Print,None,None,None
+Print,None,None,None

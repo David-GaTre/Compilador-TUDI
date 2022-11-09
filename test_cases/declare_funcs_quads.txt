@@ -7,3 +7,4 @@ o,idempotent,True,T6
 o,T6,False,T7
 >=,True,2,T8
 y,T7,T8,T9
+Print,None,None,None
