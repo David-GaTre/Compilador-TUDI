@@ -1,10 +1,17 @@
+=,1.0,None,num
 *,2,3,T1
 /,T1,2,T2
 +,1,T2,T3
 +,T3,DoSomethingA,T4
+=,T4,None,num
 -,DoSomethingA,2,T5
+=,0,None,vec
 /,DoSomethingA,2,T6
+=,1,None,vec
+=,2,None,vec
 +,1,2,T7
 *,2,2,T8
+=,34,None,mat
 +,DoSomethingA,1,T9
 -,DoSomethingA,1,T10
+=,31,None,mat

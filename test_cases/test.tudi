@@ -50,10 +50,10 @@ func Start : void () {
 
 func Update : void () {
     declare {
-        int up;
+        float up;
     }
 
-    up = DoSomethingB() + 1 - x * vector[1] / (matrix[1,1] > 2 y b < 0.2);
+    up = DoSomethingA() + 1 - x * vector[1] / (matrix[1,1] > 2 y b < 0.2);
 
     for (x = 1; x < 9; x = x + 1) {
         if (x == 2 o x == 3) {
