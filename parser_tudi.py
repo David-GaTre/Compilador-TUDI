@@ -301,56 +301,47 @@ class ParserTudi(object):
 
     # If condicional (C/C++ style)
     def p_conditional(self, p):
-        '''conditional : IF '(' god_exp ')' conditional_neuro_1 '{' block_code '}' conditional_prima conditional_neuro_4'''
+        '''conditional : IF '(' god_exp ')' cond_neuro_1 '{' cond_neuro_2 block_code '}' cond_neuro_3 conditional_prima '''
         
     # Else-If / Else condicional (C/C++ style)
     def p_conditional_prima(self, p):
-        '''conditional_prima : ELSE conditional_neuro_2 conditional 
-                             | ELSE conditional_neuro_3 '{' block_code '}' conditional_neuro_2 conditional_neuro_4
-                             | conditional_neuro_2 empty'''
+        '''conditional_prima : ELSE cond_neuro_4 conditional 
+                             | ELSE cond_neuro_4 '{' cond_neuro_2 block_code '}' cond_neuro_3 cond_neuro_5
+                             | empty cond_neuro_5'''
 
-    def p_conditional_neuro_1(self, p):
-        '''conditional_neuro_1 : '''
+    def p_cond_neuro_1(self, p):
+        '''cond_neuro_1 : '''
+        # Agregar GOTO_F
         god_exp_type, operand  = self.quadruple_gen.pop_operand()
-        #if god_exp_type != 'B':
-        #    raise Exception("Type mismatch, expecting a B type, instead got {} type.".format(str(god_exp_type)))
-        self.quadruple_gen.goto_special_stack.append('|')       
-        self.quadruple_gen.add_quad_from_parser("GOTO_F", operand, None, None)
-        self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples)-1)
+        self.quadruple_gen.goto_stack.append(self.quadruple_gen.count_q)
+        self.quadruple_gen.add_quad_from_parser("GOTO_F", operand, None, self.quadruple_gen.count_q)
 
-    def p_conditional_neuro_2(self, p):
-        '''conditional_neuro_2 : '''
-        step = self.quadruple_gen.goto_stack.pop()
-        s_quad = self.quadruple_gen.quadruples[step]
-        self.quadruple_gen.quadruples[step] = Quadruple(step+1, s_quad.operator, s_quad.left_operand, None, len(self.quadruple_gen.quadruples) + 1)
-        if p[-1] == "else":
-            self.quadruple_gen.goto_special_stack.append(len(self.quadruple_gen.quadruples)-1)
-            self.quadruple_gen.add_quad_from_parser("GOTO", None, None, None)
-            self.quadruple_gen.goto_special_stack.append(len(self.quadruple_gen.quadruples))
+    def p_cond_neuro_2(self, p):
+        '''cond_neuro_2 : '''
+        # Agregar fondo falso
+        self.quadruple_gen.goto_stack.append("|")
 
+    def p_cond_neuro_3(self, p):
+        '''cond_neuro_3 : '''
+        # Quitar fondo falso
+        self.quadruple_gen.goto_stack.pop()
 
-    def p_conditional_neuro_3(self, p):
-        '''conditional_neuro_3 : '''
-        step = self.quadruple_gen.goto_stack.pop()
-        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, None)
-        self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples)-1)
-        s_quad = self.quadruple_gen.quadruples[step]
-        self.quadruple_gen.quadruples[step] = Quadruple(step+1, "GOTO_F", s_quad.left_operand, None, len(self.quadruple_gen.quadruples)+1)
-        self.quadruple_gen.goto_special_stack.append('|')       
+    def p_cond_neuro_4(self, p):
+        '''cond_neuro_4 : '''
+        # Recuperar GOTO_F pasado
+        prev_goto_f = self.quadruple_gen.goto_stack.pop()
+        # Agregar GOTO
+        self.quadruple_gen.goto_stack.append(self.quadruple_gen.count_q)
+        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, self.quadruple_gen.count_q)
+        # Llenar GOTO_F pasado
+        self.quadruple_gen.quadruples[prev_goto_f - 1].temp = self.quadruple_gen.count_q
 
-    def p_conditional_neuro_4(self, p):
-        '''conditional_neuro_4 : '''
-        while len(self.quadruple_gen.goto_special_stack) > 0:
-            if self.quadruple_gen.goto_special_stack[-1] != '|':
-                step_goto = self.quadruple_gen.goto_special_stack.pop()
-                s_quad = self.quadruple_gen.quadruples[step_goto-1]
-                if s_quad.operator == 'GOTO_F':
-                    self.quadruple_gen.quadruples[step_goto-1] = Quadruple(s_quad.id, s_quad.operator, s_quad.left_operand, None, s_quad.temp+1)
-                elif s_quad.operator == 'GOTO':
-                    self.quadruple_gen.quadruples[step_goto-1] = Quadruple(s_quad.id, s_quad.operator, None, None, len(self.quadruple_gen.quadruples)+1)
-            else:
-                step_goto = self.quadruple_gen.goto_special_stack.pop()
-                break     
+    def p_cond_neuro_5(self, p):
+        '''cond_neuro_5 : '''
+        # Recuperar y llenar GOTOs
+        while len(self.quadruple_gen.goto_stack) > 0 and self.quadruple_gen.goto_stack[-1] != "|":
+            prev_goto = self.quadruple_gen.goto_stack.pop()
+            self.quadruple_gen.quadruples[prev_goto - 1].temp = self.quadruple_gen.count_q
 
     # Asignación de una expresión a una variables:
     # - Se debe verificar que los tipos de datos coincidan
