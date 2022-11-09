@@ -313,6 +313,9 @@ class ParserTudi(object):
         '''cond_neuro_1 : '''
         # Agregar GOTO_F
         god_exp_type, operand  = self.quadruple_gen.pop_operand()
+        # Checar que la expresión sea de tipo: Bool, Int o Float
+        if god_exp_type not in ['B', 'I', 'F']:
+           raise Exception(f"Type mismatch: Expecting a boolean, int or float, instead got {god_exp_type}.")
         self.quadruple_gen.goto_stack.append(self.quadruple_gen.count_q)
         self.quadruple_gen.add_quad_from_parser("GOTO_F", operand, None, self.quadruple_gen.count_q)
 
