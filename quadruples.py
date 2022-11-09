@@ -16,6 +16,7 @@ class QuadrupleGenerator():
         self.operand_stack = deque() 
         self.type_stack = deque() 
         self.goto_stack = deque()
+        self.goto_special_stack = deque()
 
     # Añade una operador a la pila correspondiente
     def add_operator(self, operator):
