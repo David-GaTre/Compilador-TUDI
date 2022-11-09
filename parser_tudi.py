@@ -240,7 +240,7 @@ class ParserTudi(object):
 
     # Ciclo for loop (C/C++ style)
     def p_for_loop(self, p):
-        '''for_loop : FOR '(' assignment ';' for_neuro_1 god_exp for_neuro_2 ';' assignment ')' '{' block_code '}' for_neuro_3 '''
+        '''for_loop : FOR '(' assignment ';' for_neuro_1 god_exp for_neuro_2 ';' assignment ')' '{' for_neuro_4 block_code '}' for_neuro_3 '''
     
     def p_for_neuro_1(self, p):
         '''for_neuro_1 : '''
@@ -253,6 +253,8 @@ class ParserTudi(object):
         #    raise Exception("Type mismatch, expecting a B type, instead got {} type.".format(str(god_exp_type)))
         self.quadruple_gen.add_quad_from_parser("GOTO_F", operand, None, None)
         self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples)-1)
+        self.quadruple_gen.add_quad_from_parser("GOTO_V", operand, None, None)
+        self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples)-1)
 
     def p_for_neuro_3(self, p):
         '''for_neuro_3 : '''
@@ -260,9 +262,15 @@ class ParserTudi(object):
         reference = self.quadruple_gen.goto_stack.pop()
         quads = p[-5]
         # Finish assignment
-        for q in quads:
-            self.quadruple_gen.add_quad_from_parser(q)
-        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, reference)
+        #for q in quads:
+        #    self.quadruple_gen.add_quad_from_parser(q)
+        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, reference+1)
+        s_quad = self.quadruple_gen.quadruples[step]
+        self.quadruple_gen.quadruples[step] = Quadruple(step+1, s_quad.operator, s_quad.left_operand, None, len(self.quadruple_gen.quadruples)+1)
+
+    def p_for_neuro_4(self, p):
+        '''for_neuro_4 : '''
+        step = self.quadruple_gen.goto_stack.pop()
         s_quad = self.quadruple_gen.quadruples[step]
         self.quadruple_gen.quadruples[step] = Quadruple(step+1, s_quad.operator, s_quad.left_operand, None, len(self.quadruple_gen.quadruples)+1)
 
@@ -287,7 +295,7 @@ class ParserTudi(object):
         '''while_neuro_3 : '''
         step = self.quadruple_gen.goto_stack.pop()
         reference = self.quadruple_gen.goto_stack.pop()
-        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, reference)
+        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, reference+1)
         s_quad = self.quadruple_gen.quadruples[step]
         self.quadruple_gen.quadruples[step] = Quadruple(step+1, s_quad.operator, s_quad.left_operand, None, len(self.quadruple_gen.quadruples)+1)
 
