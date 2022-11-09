@@ -1,7 +1,7 @@
 from lexer import LexerTudi, Token
 from dir_vars import FunctionsDirectory
 from sem_cube import SemanticCube
-from quadruples import Quadruple, QuadrupleGenerator, type_to_char, char_to_type
+from quadruples import QuadrupleGenerator, type_to_char, char_to_type
 
 import ply.yacc as yacc
 
