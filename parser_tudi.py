@@ -257,44 +257,57 @@ class ParserTudi(object):
 
     # Ciclo for loop (C/C++ style)
     def p_for_loop(self, p):
-        '''for_loop : FOR '(' assignment ';' for_neuro_1 god_exp for_neuro_2 ';' assignment ')' '{' for_neuro_4 block_code '}' for_neuro_3 '''
+        '''for_loop : FOR '(' assignment ';' for_neuro_1 god_exp for_neuro_2 ';' for_neuro_3 assignment for_neuro_4 ')' '{' cond_neuro_2 block_code '}' cond_neuro_3 for_neuro_5 '''
     
     def p_for_neuro_1(self, p):
         '''for_neuro_1 : '''
-        self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples))
+        # Marcar inicio de evaluación de expresión condicional
+        self.quadruple_gen.goto_stack.append(self.quadruple_gen.count_q)
 
     def p_for_neuro_2(self, p):
         '''for_neuro_2 : '''
         c_type, operand  = self.quadruple_gen.pop_operand()
-        #if god_exp_type != 'B':
-        #    raise Exception("Type mismatch, expecting a B type, instead got {} type.".format(str(god_exp_type)))
+        # Checar que la expresión sea de tipo: Bool, Int o Float
+        if c_type not in ['B', 'I', 'F']:
+           raise Exception(f"Type mismatch: Expecting a boolean, int or float, instead got {char_to_type[c_type]}.")
+        # Agregar GOTO_F
+        self.quadruple_gen.goto_stack.append(self.quadruple_gen.count_q)
         self.quadruple_gen.add_quad_from_parser("GOTO_F", operand, None, None)
-        self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples)-1)
+        # Agregar GOTO_V
+        self.quadruple_gen.goto_stack.append(self.quadruple_gen.count_q)
         self.quadruple_gen.add_quad_from_parser("GOTO_V", operand, None, None)
-        self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples)-1)
 
     def p_for_neuro_3(self, p):
         '''for_neuro_3 : '''
-        step = self.quadruple_gen.goto_stack.pop()
-        reference = self.quadruple_gen.goto_stack.pop()
-        quads = p[-5]
-        # Finish assignment
-        #for q in quads:
-        #    self.quadruple_gen.add_quad_from_parser(q)
-        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, reference+1)
-        s_quad = self.quadruple_gen.quadruples[step]
-        self.quadruple_gen.quadruples[step] = Quadruple(step+1, s_quad.operator, s_quad.left_operand, None, len(self.quadruple_gen.quadruples)+1)
+        # Marcar inicio de evaluación de expresión de actualización
+        self.quadruple_gen.goto_stack.append(self.quadruple_gen.count_q)
 
     def p_for_neuro_4(self, p):
         '''for_neuro_4 : '''
-        step = self.quadruple_gen.goto_stack.pop()
-        s_quad = self.quadruple_gen.quadruples[step]
-        self.quadruple_gen.quadruples[step] = Quadruple(step+1, s_quad.operator, s_quad.left_operand, None, len(self.quadruple_gen.quadruples)+1)
+        # Agregar GOTO
+        self.quadruple_gen.goto_stack.append(self.quadruple_gen.count_q)
+        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, None)
 
+    def p_for_neuro_5(self, p):
+        '''for_neuro_5 : '''
+        # Recuperar todos los valores relacionados al for
+        goto_cond = self.quadruple_gen.goto_stack.pop()
+        prev_eval_update = self.quadruple_gen.goto_stack.pop()
+        goto_V = self.quadruple_gen.goto_stack.pop()
+        goto_F = self.quadruple_gen.goto_stack.pop()
+        prev_eval_cond = self.quadruple_gen.goto_stack.pop()
+        # Agregar GOTO a update
+        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, prev_eval_update)
+        # Llenar GOTO cond a inicio condición
+        self.quadruple_gen.quadruples[goto_cond - 1].temp = prev_eval_cond
+        # Llenar GOTO V a después de GOTO cond
+        self.quadruple_gen.quadruples[goto_V - 1].temp = goto_cond + 1
+        # Llenar GOTO F a después de GOTO update (a.k.a current count_q)
+        self.quadruple_gen.quadruples[goto_F - 1].temp = self.quadruple_gen.count_q
 
     # Ciclo while clásico (C/C++ style)
     def p_while_loop(self, p):
-        '''while_loop : WHILE while_neuro_1 '(' god_exp while_neuro_2 ')' '{' block_code '}' while_neuro_3 '''
+        '''while_loop : WHILE while_neuro_1 '(' god_exp while_neuro_2 ')' '{' cond_neuro_2 block_code '}' cond_neuro_3 while_neuro_3 '''
 
     def p_while_neuro_1(self, p):
         '''while_neuro_1 : '''
@@ -332,7 +345,7 @@ class ParserTudi(object):
         god_exp_type, operand  = self.quadruple_gen.pop_operand()
         # Checar que la expresión sea de tipo: Bool, Int o Float
         if god_exp_type not in ['B', 'I', 'F']:
-           raise Exception(f"Type mismatch: Expecting a boolean, int or float, instead got {god_exp_type}.")
+           raise Exception(f"Type mismatch: Expecting a boolean, int or float, instead got {char_to_type[god_exp_type]}.")
         self.quadruple_gen.goto_stack.append(self.quadruple_gen.count_q)
         self.quadruple_gen.add_quad_from_parser("GOTO_F", operand, None, self.quadruple_gen.count_q)
 
