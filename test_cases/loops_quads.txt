@@ -1,7 +1,15 @@
+=,0,None,i
 <,i,5,T1
 *,i,2,T2
+=,T2,None,vec
+=,5,None,five
+=,0,None,i
 <,i,5,T3
 +,i,1,T4
+=,T4,None,i
+=,0,None,j
 <,j,five,T5
 +,j,1,T6
+=,T6,None,j
 +,i,j,T7
+=,T7,None,mat
