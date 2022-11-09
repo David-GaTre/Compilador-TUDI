@@ -7,4 +7,8 @@ o,idempotent,True,T6
 o,T6,False,T7
 >=,True,2,T8
 y,T7,T8,T9
+=,a,None,vec
+=,b,None,vec
+=,c,None,vec
+=,0,None,mat
 Print,None,None,None

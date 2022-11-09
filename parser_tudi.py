@@ -1,7 +1,7 @@
 from lexer import LexerTudi, Token
 from dir_vars import FunctionsDirectory
 from sem_cube import SemanticCube
-from quadruples import Quadruple, QuadrupleGenerator, type_dict
+from quadruples import Quadruple, QuadrupleGenerator, type_to_char, char_to_type
 
 import ply.yacc as yacc
 
@@ -178,12 +178,15 @@ class ParserTudi(object):
     def p_io_func(self, p):
         '''io_func : PRINT '(' io_func_prima ')'
                    | READ  '(' io_func_prima ')' '''
+        # TODO: Unfinished. Finish later
+        p[0] = p[1]
         self.quadruple_gen.add_quad_from_parser(p[1], None, None, None)
 
     # El argumento posible de una función I/O
     def p_io_func_prima(self, p):
         '''io_func_prima : STRING_LITERAL
                          | empty'''
+        # TODO: Unfinished. Finish later
 
     # Funciones built-in de cast en TUDI:
     # - Para los tipos de datos: int, float y bool
@@ -192,6 +195,8 @@ class ParserTudi(object):
         '''cast_func : INT cast_func_prima
                      | FLOAT cast_func_prima
                      | BOOLEAN cast_func_prima'''
+        # TODO: Unfinished. Finish later
+        p[0] = p[1]
 
     # El argumento posible de una función de cast:
     # - String literal o arreglo de chars
@@ -209,7 +214,19 @@ class ParserTudi(object):
             if not self.func_dir.find_function(p[1]):
                 print(f'Error: Function \'{p[1]}\' at line {p.lineno(1)} was not declared.')
                 raise Exception(f'Error: Function \'{p[1]}\' at line {p.lineno(1)} was not declared.')
-        p[0] = [p[1], 'B', p[0]] # Dummy value in the meantime, need help obtaining data type
+
+            func = {'name': p[1]} | self.func_dir.find_function(p[1])
+            p[0] = [p[1], type_to_char[func['return_type']], p[0]] # Dummy value in the meantime
+        elif p[1] == 'Read':
+            p[0] = [p[1], 'C', p[0]] # Dummy value and type in the meantime
+        elif p[1] == 'int':
+            p[0] = [p[1], 'I', p[0]] # Dummy value in the meantime
+        elif p[1] == 'float':
+            p[0] = [p[1], 'F', p[0]] # Dummy value in the meantime
+        elif p[1] == 'bool':
+            p[0] = [p[1], 'B', p[0]] # Dummy value in the meantime
+        else:
+            p[0] = [p[1], 'V', p[0]] # Dummy value in the meantime
 
     # Llamada a un método, requisitos:
     # - Los únicos métodos en TUDI pertenecen a una variable de tipo sprite
@@ -349,7 +366,14 @@ class ParserTudi(object):
     # Asignación de una expresión a una variables:
     # - Se debe verificar que los tipos de datos coincidan
     def p_assignment(self, p):
-        '''assignment : id_exp ASSIGN_OP god_exp seen_god_exp '''
+        '''assignment : id_exp ASSIGN_OP god_exp '''
+        t_type, operand = self.quadruple_gen.pop_operand()
+        # Checar que id_exp sea del mismo tipo que la expresión
+        # id_exp: [name, type]
+        if p[1][1] != t_type:
+            print(f'Error: Cannot assign value of type \'{char_to_type[t_type]}\' to variable \'{p[1][0]}\' of type \'{char_to_type[p[1][1]]}\' at line {p.lineno(2)}.')
+            raise Exception(f'Error: Cannot assign value of type \'{char_to_type[t_type]}\' to variable \'{p[1][0]}\' of type \'{char_to_type[p[1][1]]}\' at line {p.lineno(2)}.')
+        self.quadruple_gen.add_assignment(p[1][0], operand)
 
     # Tipos de datos en TUDI:
     # - Pueden ser arreglos de 1 o 2 dimensiones
@@ -509,7 +533,7 @@ class ParserTudi(object):
             raise Exception(f'Error: Variable \'{p[1]}\' at line {p.lineno(1)} was not declared.')
 
         var = {"name": p[1]} | self.func_dir.find_variable(self.last_vars['scope'], p[1])
-        p[0] = [p[1], type_dict[var["type"]]]
+        p[0] = [p[1], type_to_char[var["type"]]]
 
     def p_seen_dec_func(self, p):
         '''seen_dec_func :'''
