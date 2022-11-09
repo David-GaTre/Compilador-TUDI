@@ -311,23 +311,28 @@ class ParserTudi(object):
 
     def p_while_neuro_1(self, p):
         '''while_neuro_1 : '''
-        self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples))
+        # Marcar inicio de evaluación de expresión condicional
+        self.quadruple_gen.goto_stack.append(self.quadruple_gen.count_q)
 
     def p_while_neuro_2(self, p):
         '''while_neuro_2 : '''
         c_type, operand  = self.quadruple_gen.pop_operand()
-        #if god_exp_type != 'B':
-        #    raise Exception("Type mismatch, expecting a B type, instead got {} type.".format(str(god_exp_type)))
+        # Checar que la expresión sea de tipo: Bool, Int o Float
+        if c_type not in ['B', 'I', 'F']:
+           raise Exception(f"Type mismatch: Expecting a boolean, int or float, instead got {char_to_type[c_type]}.")
+        # Agregar GOTO_F
+        self.quadruple_gen.goto_stack.append(self.quadruple_gen.count_q)
         self.quadruple_gen.add_quad_from_parser("GOTO_F", operand, None, None)
-        self.quadruple_gen.goto_stack.append(len(self.quadruple_gen.quadruples)-1)
 
     def p_while_neuro_3(self, p):
         '''while_neuro_3 : '''
-        step = self.quadruple_gen.goto_stack.pop()
-        reference = self.quadruple_gen.goto_stack.pop()
-        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, reference+1)
-        s_quad = self.quadruple_gen.quadruples[step]
-        self.quadruple_gen.quadruples[step] = Quadruple(step+1, s_quad.operator, s_quad.left_operand, None, len(self.quadruple_gen.quadruples)+1)
+        # Recuperar GOTO_F e inicio de evaluación de expresión de condición
+        goto_f = self.quadruple_gen.goto_stack.pop()
+        prev_eval_cond = self.quadruple_gen.goto_stack.pop()
+        # Agregar GOTO para regresar a evaluación
+        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, prev_eval_cond)
+        # Llenar GOTO_F pasado
+        self.quadruple_gen.quadruples[goto_f - 1].temp = self.quadruple_gen.count_q
 
     # If condicional (C/C++ style)
     def p_conditional(self, p):
