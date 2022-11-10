@@ -1,5 +1,10 @@
 # TUDI
 
+## Avance 5
+Se implementan borradores de los cuadruplos de los condicionales (if - else - else if) y de ciclo while. Se generaron funciones adicionales para generar cuadruplos desde el parser.
+
+Se planea implementar el ciclo for y encontrar casos de prueba adicionales.
+
 ## Avance 4
 Se implementa la generación de cuadruplos para expresiones aritméticas, relacionales y lógicas. 
 Se implementa una más estructurada suite de testing. En la que se checa que la sintaxis funcione y los cuadruplos sean los esperados.

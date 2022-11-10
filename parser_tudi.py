@@ -102,19 +102,19 @@ class ParserTudi(object):
     # - Una lista de parámetros
     # - Código de la función
     def p_declare_func(self, p):
-        '''declare_func : FUNC ID ':' func_type seen_dec_func '(' list_params ')' '{' block_code '}' '''
+        '''declare_func : FUNC ID ':' func_type seen_dec_func '(' list_params ')' '{' block_vars_code '}' '''
 
     # Definición de función Start de TUDI:
     # - Si está presente en el programa, la función Start es
     #   la primera en ejecutarse
     def p_func_start(self, p):
-        '''func_start : FUNC START ':' VOID seen_dec_func '(' ')' '{' block_code '}' '''
+        '''func_start : FUNC START ':' VOID seen_dec_func '(' ')' '{' block_vars_code '}' '''
 
     # Definición de función Update de TUDI:
     # - Si está presente en el programa, la función Update es
     #   la función que está siendo ejecutada constantemente (loop)
     def p_func_update(self, p):
-        '''func_update : FUNC UPDATE ':' VOID seen_dec_func '(' ')' '{' block_code '}' '''
+        '''func_update : FUNC UPDATE ':' VOID seen_dec_func '(' ')' '{' block_vars_code '}' '''
 
     # Lista de parámetros de una función
     def p_list_params(self, p):
@@ -133,12 +133,18 @@ class ParserTudi(object):
                      | VOID '''
         p[0] = p[1]
 
-    # Bloque de código, puede incluir:
+    # Bloque de código con posibles variables, puede incluir:
     # - Bloque de declaración de variables
     # - Estatutos
+    def p_block_vars_code(self, p):
+        '''block_vars_code : block_vars statement_prima
+                           | statement statement_prima
+                           | empty'''
+
+    # Bloque de código solamente, puede incluir:
+    # - Estatutos
     def p_block_code(self, p):
-        '''block_code : block_vars statement_prima
-                      | statement statement_prima
+        '''block_code : statement statement_prima
                       | empty'''
 
     # Un estatuto puede ser:
@@ -174,6 +180,7 @@ class ParserTudi(object):
                    | READ  '(' io_func_prima ')' '''
         # TODO: Unfinished. Finish later
         p[0] = p[1]
+        self.quadruple_gen.add_quad_from_parser(p[1], None, None, None)
 
     # El argumento posible de una función I/O
     def p_io_func_prima(self, p):
@@ -250,25 +257,129 @@ class ParserTudi(object):
 
     # Ciclo for loop (C/C++ style)
     def p_for_loop(self, p):
-        '''for_loop : FOR '(' assignment ';' god_exp seen_god_exp ';' assignment ')' '{' block_code '}' '''
+        '''for_loop : FOR '(' assignment ';' for_neuro_1 god_exp for_neuro_2 ';' for_neuro_3 assignment for_neuro_4 ')' '{' cond_neuro_2 block_code '}' cond_neuro_3 for_neuro_5 '''
+    
+    def p_for_neuro_1(self, p):
+        '''for_neuro_1 : '''
+        # Marcar inicio de evaluación de expresión condicional
+        self.quadruple_gen.goto_stack.append(self.quadruple_gen.count_q)
+
+    def p_for_neuro_2(self, p):
+        '''for_neuro_2 : '''
+        c_type, operand  = self.quadruple_gen.pop_operand()
+        # Checar que la expresión sea de tipo: Bool, Int o Float
+        if c_type not in ['B', 'I', 'F']:
+           raise Exception(f"Type mismatch: Expecting a boolean, int or float, instead got {char_to_type[c_type]}.")
+        # Agregar GOTO_F
+        self.quadruple_gen.goto_stack.append(self.quadruple_gen.count_q)
+        self.quadruple_gen.add_quad_from_parser("GOTO_F", operand, None, None)
+        # Agregar GOTO_V
+        self.quadruple_gen.goto_stack.append(self.quadruple_gen.count_q)
+        self.quadruple_gen.add_quad_from_parser("GOTO_V", operand, None, None)
+
+    def p_for_neuro_3(self, p):
+        '''for_neuro_3 : '''
+        # Marcar inicio de evaluación de expresión de actualización
+        self.quadruple_gen.goto_stack.append(self.quadruple_gen.count_q)
+
+    def p_for_neuro_4(self, p):
+        '''for_neuro_4 : '''
+        # Agregar GOTO
+        self.quadruple_gen.goto_stack.append(self.quadruple_gen.count_q)
+        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, None)
+
+    def p_for_neuro_5(self, p):
+        '''for_neuro_5 : '''
+        # Recuperar todos los valores relacionados al for
+        goto_cond = self.quadruple_gen.goto_stack.pop()
+        prev_eval_update = self.quadruple_gen.goto_stack.pop()
+        goto_V = self.quadruple_gen.goto_stack.pop()
+        goto_F = self.quadruple_gen.goto_stack.pop()
+        prev_eval_cond = self.quadruple_gen.goto_stack.pop()
+        # Agregar GOTO a update
+        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, prev_eval_update)
+        # Llenar GOTO cond a inicio condición
+        self.quadruple_gen.quadruples[goto_cond - 1].temp = prev_eval_cond
+        # Llenar GOTO V a después de GOTO cond
+        self.quadruple_gen.quadruples[goto_V - 1].temp = goto_cond + 1
+        # Llenar GOTO F a después de GOTO update (a.k.a current count_q)
+        self.quadruple_gen.quadruples[goto_F - 1].temp = self.quadruple_gen.count_q
 
     # Ciclo while clásico (C/C++ style)
     def p_while_loop(self, p):
-        '''while_loop : WHILE while_act_1 '(' god_exp seen_god_exp ')' '{' block_code '}' '''
+        '''while_loop : WHILE while_neuro_1 '(' god_exp while_neuro_2 ')' '{' cond_neuro_2 block_code '}' cond_neuro_3 while_neuro_3 '''
 
-    def p_while_act_1(self, p):
-        '''while_act_1 : '''
-        # goto_stack.append(len(quadruples)
+    def p_while_neuro_1(self, p):
+        '''while_neuro_1 : '''
+        # Marcar inicio de evaluación de expresión condicional
+        self.quadruple_gen.goto_stack.append(self.quadruple_gen.count_q)
+
+    def p_while_neuro_2(self, p):
+        '''while_neuro_2 : '''
+        c_type, operand  = self.quadruple_gen.pop_operand()
+        # Checar que la expresión sea de tipo: Bool, Int o Float
+        if c_type not in ['B', 'I', 'F']:
+           raise Exception(f"Type mismatch: Expecting a boolean, int or float, instead got {char_to_type[c_type]}.")
+        # Agregar GOTO_F
+        self.quadruple_gen.goto_stack.append(self.quadruple_gen.count_q)
+        self.quadruple_gen.add_quad_from_parser("GOTO_F", operand, None, None)
+
+    def p_while_neuro_3(self, p):
+        '''while_neuro_3 : '''
+        # Recuperar GOTO_F e inicio de evaluación de expresión de condición
+        goto_f = self.quadruple_gen.goto_stack.pop()
+        prev_eval_cond = self.quadruple_gen.goto_stack.pop()
+        # Agregar GOTO para regresar a evaluación
+        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, prev_eval_cond)
+        # Llenar GOTO_F pasado
+        self.quadruple_gen.quadruples[goto_f - 1].temp = self.quadruple_gen.count_q
 
     # If condicional (C/C++ style)
     def p_conditional(self, p):
-        '''conditional : IF '(' god_exp seen_god_exp ')' '{' block_code '}' conditional_prima'''
-
+        '''conditional : IF '(' god_exp ')' cond_neuro_1 '{' cond_neuro_2 block_code '}' cond_neuro_3 conditional_prima '''
+        
     # Else-If / Else condicional (C/C++ style)
     def p_conditional_prima(self, p):
-        '''conditional_prima : ELSE conditional
-                             | ELSE '{' block_code '}'
-                             | empty'''
+        '''conditional_prima : ELSE cond_neuro_4 conditional 
+                             | ELSE cond_neuro_4 '{' cond_neuro_2 block_code '}' cond_neuro_3 cond_neuro_5
+                             | empty cond_neuro_5'''
+
+    def p_cond_neuro_1(self, p):
+        '''cond_neuro_1 : '''
+        # Agregar GOTO_F
+        god_exp_type, operand  = self.quadruple_gen.pop_operand()
+        # Checar que la expresión sea de tipo: Bool, Int o Float
+        if god_exp_type not in ['B', 'I', 'F']:
+           raise Exception(f"Type mismatch: Expecting a boolean, int or float, instead got {char_to_type[god_exp_type]}.")
+        self.quadruple_gen.goto_stack.append(self.quadruple_gen.count_q)
+        self.quadruple_gen.add_quad_from_parser("GOTO_F", operand, None, self.quadruple_gen.count_q)
+
+    def p_cond_neuro_2(self, p):
+        '''cond_neuro_2 : '''
+        # Agregar fondo falso
+        self.quadruple_gen.goto_stack.append("|")
+
+    def p_cond_neuro_3(self, p):
+        '''cond_neuro_3 : '''
+        # Quitar fondo falso
+        self.quadruple_gen.goto_stack.pop()
+
+    def p_cond_neuro_4(self, p):
+        '''cond_neuro_4 : '''
+        # Recuperar GOTO_F pasado
+        prev_goto_f = self.quadruple_gen.goto_stack.pop()
+        # Agregar GOTO
+        self.quadruple_gen.goto_stack.append(self.quadruple_gen.count_q)
+        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, self.quadruple_gen.count_q)
+        # Llenar GOTO_F pasado
+        self.quadruple_gen.quadruples[prev_goto_f - 1].temp = self.quadruple_gen.count_q
+
+    def p_cond_neuro_5(self, p):
+        '''cond_neuro_5 : '''
+        # Recuperar y llenar GOTOs
+        while len(self.quadruple_gen.goto_stack) > 0 and self.quadruple_gen.goto_stack[-1] != "|":
+            prev_goto = self.quadruple_gen.goto_stack.pop()
+            self.quadruple_gen.quadruples[prev_goto - 1].temp = self.quadruple_gen.count_q
 
     # Asignación de una expresión a una variables:
     # - Se debe verificar que los tipos de datos coincidan
