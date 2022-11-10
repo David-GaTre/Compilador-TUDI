@@ -1,6 +1,7 @@
 from collections import deque
 
-type_dict = {'int': 'I', 'float': 'F', 'char': 'C', 'bool': 'B', 'arr1d': 'A', 'sprite': 'S'}
+type_to_char = {'int': 'I', 'float': 'F', 'char': 'C', 'bool': 'B', 'arr1d': 'A', 'sprite': 'S', 'void': 'V'}
+char_to_type = {'I': 'int', 'F': 'float', 'C': 'char', 'B': 'bool', 'A': 'arr1d', 'S': 'sprite', 'V': 'void'}
 
 class QuadrupleGenerator():
     def __init__(self):
@@ -16,6 +17,7 @@ class QuadrupleGenerator():
         self.operand_stack = deque() 
         self.type_stack = deque() 
         self.goto_stack = deque()
+        self.goto_special_stack = deque()
 
     # Añade una operador a la pila correspondiente
     def add_operator(self, operator):
@@ -29,6 +31,10 @@ class QuadrupleGenerator():
     def add_operand(self, type_t, operand):
         self.type_stack.append(type_t)
         self.operand_stack.append(operand)
+
+    def add_quad_from_parser(self, operator, left_operand, right_operand, temp):
+        self.quadruples.append(Quadruple(self.count_q, operator, left_operand, right_operand, temp))
+        self.count_q += 1 
 
     # Regresa y elimina el tipo y operando más recientes de las pilas correspondientes
     def pop_operand(self):
@@ -53,14 +59,14 @@ class QuadrupleGenerator():
             result_t = sem_cube.validate_expression(left_type, right_type, operator)
 
             if result_t == "ERROR: Not valid operation":
-                raise Exception("TYPE MISMATCH")
+                raise Exception(f"TYPE MISMATCH: {left_oper} ({char_to_type[left_type]}) {operator} {right_oper} ({char_to_type[right_type]})")
 
             t = self.get_next_temp()
             
             self.quadruples.append(Quadruple(self.count_q, operator, left_oper, right_oper, t))
             self.count_q += 1
             
-            result_t = type_dict[result_t]
+            result_t = type_to_char[result_t]
             self.operand_stack.append(t)
             self.type_stack.append(result_t)
 
@@ -84,9 +90,13 @@ class QuadrupleGenerator():
             self.quadruples.append(Quadruple(self.count_q, operator, left_oper, right_oper, t))
             self.count_q += 1
 
-            result_t = type_dict[result_t]
+            result_t = type_to_char[result_t]
             self.operand_stack.append(t)
             self.type_stack.append(result_t)
+
+    def add_assignment(self, var_id, var_val):
+        self.quadruples.append(Quadruple(self.count_q, '=', var_val, None, var_id))
+        self.count_q += 1
 
     def print_quadruples(self):
         for i in self.quadruples:

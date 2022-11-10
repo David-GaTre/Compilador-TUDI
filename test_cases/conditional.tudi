@@ -19,7 +19,7 @@ func DoSomethingBoolean : bool () {
 func Start : void () {
     is_active = true;
     binary = 0;
-    count = 0;
+    count = 0.0;
 }
 
 func Update : void () {
@@ -59,7 +59,7 @@ func Update : void () {
             Print("The NE");
         }
 
-        count = 0;
+        count = 0.0;
     }
 
     count = count + 0.5;
