@@ -298,12 +298,12 @@ class ParserTudi(object):
 
     # Lista de argumentos (expresiones)
     def p_list_args(self, p):
-        '''list_args : god_exp list_args_prima
+        '''list_args : god_exp seen_god_exp list_args_prima
                      | empty'''
 
     # Añadir un argumento a la lista de argumentos
     def p_list_args_prima(self, p):
-        '''list_args_prima : ',' god_exp list_args_prima
+        '''list_args_prima : ',' god_exp seen_god_exp list_args_prima
                            | empty'''
 
     # Ciclo for loop (C/C++ style)
