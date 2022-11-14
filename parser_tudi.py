@@ -257,7 +257,7 @@ class ParserTudi(object):
         t_type, operand = self.quadruple_gen.pop_operand()
         # Verifica el parametro
         func, param_counter = self.quadruple_gen.params_stack[-1]
-        if param_counter > len(func["params"]):
+        if param_counter >= len(func["params"]):
             print(f"Error: Function {func['name']} expected {len(func['params'])} arguments, but got more than needed.")
             raise Exception(f"Error: Function {func['name']} expected {len(func['params'])} arguments, but got more than needed.")
 
