@@ -30,11 +30,11 @@ class FunctionsDirectory:
         self.directory = {}
         self.directory[self.GLOBAL_ENV] = {'table': VariablesTable()}
 
-    def add_function(self, func_name: str, return_type: str) -> bool:
+    def add_function(self, func_name: str, return_type: str, start: int) -> bool:
         if func_name in self.directory:
             return False
 
-        self.directory[func_name] = {'return_type': return_type, 'params': [], 'table': VariablesTable()}
+        self.directory[func_name] = {'start': start, 'return_type': return_type, 'params': [], 'table': VariablesTable()}
         return True
 
     def add_param(self, func_name: str, var_name: str, var_type: str) -> bool:
