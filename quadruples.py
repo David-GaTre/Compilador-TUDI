@@ -1,4 +1,5 @@
 from collections import deque
+from memory import get_next_temporal
 
 type_to_char = {'int': 'I', 'float': 'F', 'char': 'C', 'bool': 'B', 'arr1d': 'A', 'sprite': 'S', 'void': 'V'}
 char_to_type = {'I': 'int', 'F': 'float', 'C': 'char', 'B': 'bool', 'A': 'arr1d', 'S': 'sprite', 'V': 'void'}
@@ -40,10 +41,11 @@ class QuadrupleGenerator():
     def pop_operand(self):
         return self.type_stack.pop(), self.operand_stack.pop()
 
-    def get_next_temp(self):
+    def get_next_temp(self, result_t):
         # On the meantime returns string, wait for memory implementation
         self.temp_vars += 1
-        return 'T' + str(self.temp_vars)
+        next_t = get_next_temporal(type_to_char[result_t])
+        return next_t
 
     # Utiliza un cubo semántico para validar que una expresión es correcta
     def check_stack_operand(self, arr_operators, sem_cube):
@@ -61,7 +63,7 @@ class QuadrupleGenerator():
             if result_t == "ERROR: Not valid operation":
                 raise Exception(f"TYPE MISMATCH: {left_oper} ({char_to_type[left_type]}) {operator} {right_oper} ({char_to_type[right_type]})")
 
-            t = self.get_next_temp()
+            t = self.get_next_temp(result_t)
             
             self.quadruples.append(Quadruple(self.count_q, operator, left_oper, right_oper, t))
             self.count_q += 1
@@ -85,7 +87,7 @@ class QuadrupleGenerator():
             if result_t == "ERROR: Not valid operation":
                 raise Exception("TYPE MISMATCH")
 
-            t = self.get_next_temp()
+            t = self.get_next_temp(result_t)
 
             self.quadruples.append(Quadruple(self.count_q, operator, left_oper, right_oper, t))
             self.count_q += 1

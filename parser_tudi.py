@@ -2,6 +2,7 @@ from lexer import LexerTudi, Token
 from dir_vars import FunctionsDirectory
 from sem_cube import SemanticCube
 from quadruples import QuadrupleGenerator, type_to_char, char_to_type
+from memory import get_next_temporal
 
 import ply.yacc as yacc
 
@@ -219,8 +220,9 @@ class ParserTudi(object):
             self.quadruple_gen.add_quad_from_parser("GOSUB", None, None, func["name"])
             # Guarda valor si no es void
             if func['return_type'] != "void":
-                self.quadruple_gen.add_assignment(self.quadruple_gen.get_next_temp(), func["name"])
-                p[0] = ['T' + str(self.quadruple_gen.temp_vars), type_to_char[func['return_type']], p[0]]
+                t = self.quadruple_gen.get_next_temp(func['return_type'])
+                self.quadruple_gen.add_assignment(t, func["name"])
+                p[0] = [t, type_to_char[func['return_type']], p[0]]
             else:
                 p[0] = [func["name"], type_to_char[func['return_type']], p[0]] # Dummy value in the meantime
         elif p[1] == 'Read':
