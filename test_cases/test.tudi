@@ -11,7 +11,9 @@ declare {
     bool[5,5] matrix;
 }
 
-func DoSomethingA : int () {}
+func DoSomethingA : int () {
+    return 1;
+}
 
 func DoSomethingB : sprite[1,1] (int pos_x, int pos_y) {
     declare {

@@ -20,7 +20,7 @@ func DoSomethingVoid : void () {
 
 func Start : void () {    
     pos_x = DoSomethingInt(1, 2, 3) + 0.0;
-    pos_y = DoSomethingFloat(10);
+    pos_y = DoSomethingFloat(10.0);
 }
 
 func Update : void () {
