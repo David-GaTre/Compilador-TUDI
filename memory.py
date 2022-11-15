@@ -1,5 +1,4 @@
-from collections import deque #Para el stack de scopes
-
+from collections import deque 
 
 # NUMERIC CONSTANTS FOR MEMORY ADDRESSING
 GLOBAL_INT, GLOBAL_INT_LIMIT= 0,0
@@ -36,8 +35,7 @@ class Memory():
     def __str__(self):
         return f'Adress: {self.address}, Value: {self.value}\n'
 
-memory_table = {} # It is used to store the constant values but with the key->address
-constant_table= {} # It is used to store the constant values
+constant_table= {}
 call_stack = deque()
 
 def get_default_value(token):
@@ -50,16 +48,16 @@ def get_default_value(token):
     elif token == 'B':
         return True
 
-def get_const_address(value, type):
-    if value in constant_table.keys():
-        return constant_table[value].address
+# Usar para tabla de tabla de constantes en un diccionario
+def get_constant_address(val, type):
+    if val in constant_table.keys():
+        return constant_table[val].address
     address = get_next_constant(type)
-    new_value = Memory(value, address)
-    constant_table[value] = new_value
-    memory_table[address] = new_value
+    new_value = Memory(val, address)
+    constant_table[val] = new_value
     return address
 
-def get_next_global_value(token):
+def get_next_global(token):
     if(token == "I"):
         global GLOBAL_INT
         GLOBAL_INT += 1

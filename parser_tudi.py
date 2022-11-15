@@ -2,7 +2,7 @@ from lexer import LexerTudi, Token
 from dir_vars import FunctionsDirectory
 from sem_cube import SemanticCube
 from quadruples import QuadrupleGenerator, type_to_char, char_to_type
-from memory import get_next_temporal
+from memory import get_next_global, get_next_local, get_constant_address
 
 import ply.yacc as yacc
 
@@ -69,7 +69,11 @@ class ParserTudi(object):
 
         # Checar por nombres de variables duplicadas en el scope actual
         for var_id in p[2]:
-            if not self.func_dir.add_variable(self.last_vars['scope'], var_id.value, self.last_vars['var_type']):
+            if self.last_vars['scope'] == '0':
+                mem_address = get_next_global(type_to_char[self.last_vars['var_type']])
+            else:
+                mem_address = get_next_local(type_to_char[self.last_vars['var_type']])
+            if not self.func_dir.add_variable(self.last_vars['scope'], var_id.value, self.last_vars['var_type'], mem_address):
                 print(f'Error: Re-declaration of variable \'{var_id.value}\' at line: {var_id.lineno}')
                 raise Exception(f'Error: Re-declaration of variable \'{var_id.value}\' at line: {var_id.lineno}')
 
@@ -541,6 +545,7 @@ class ParserTudi(object):
         if len(p) == 2:
             # (Type, operand)
             self.quadruple_gen.add_operand(p[1][1], p[1][0])
+            print(p[1][0])
         p[0] = p[1]
 
     # Variables, literals, y llamadas a una función
@@ -557,17 +562,21 @@ class ParserTudi(object):
     # Enteros
     def p_int(self, p):
         '''int : INT_LITERAL'''
-        p[0] = [p[1], 'I']
+        address = get_constant_address(p[1], 'I')
+        p[0] = [address, 'I']
+
 
     # Flotantes
     def p_float(self, p):
         '''float : FLOAT_LITERAL'''
-        p[0] = [p[1], 'F']
+        address = get_constant_address(p[1], 'F')
+        p[0] = [address, 'F']
 
     # Booleanos
     def p_bool(self, p):
         '''bool : BOOL_LITERAL'''
-        p[0] = [p[1], 'B']
+        address = get_constant_address(p[1], 'B')
+        p[0] = [address, 'B']
 
     def p_seen_op(self, p):
         '''seen_op : '''
@@ -604,7 +613,7 @@ class ParserTudi(object):
             raise Exception(f'Error: Variable \'{p[1]}\' at line {p.lineno(1)} was not declared.')
 
         var = {"name": p[1]} | self.func_dir.find_variable(self.last_vars['scope'], p[1])
-        p[0] = [p[1], type_to_char[var["type"]]]
+        p[0] = [var['address'], type_to_char[var["type"]]]
 
     def p_seen_dec_func(self, p):
         '''seen_dec_func :'''
@@ -623,7 +632,9 @@ class ParserTudi(object):
         # la declaración de un parámetro.
         # p[-1] es la producción en la que aparece nombre del parámetro
         # p[-2] es la producción en la que aparece el tipo de dato
-        if not self.func_dir.add_param(self.last_vars['scope'], p[-1], p[-2]):
+        mem_address = get_next_local(type_to_char[p[-2]])
+
+        if not self.func_dir.add_param(self.last_vars['scope'], p[-1], p[-2], mem_address):
             print(f'Error: Re-declaration of function parameter \'{p[-1]}\'.')
             raise Exception(f'Error: Re-declaration of function parameter \'{p[-1]}\'.')
 
