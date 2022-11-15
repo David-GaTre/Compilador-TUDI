@@ -33,12 +33,15 @@ class Memory():
         self.value= value
 
     def __str__(self):
-        return f'Adress: {self.address}, Value: {self.value}\n'
+        return f'Address: {self.address}, Value: {self.value}\n'
+
+    def __repr__(self):
+        return f'Address: {self.address}, Value: {self.value}\n'
 
 constant_table= {}
 call_stack = deque()
 
-def get_default_value(token):
+def get_default(token):
     if token == 'I':
         return 0
     elif token == 'C':
@@ -52,12 +55,12 @@ def get_default_value(token):
 def get_constant_address(val, type):
     if val in constant_table.keys():
         return constant_table[val].address
-    address = get_next_constant(type)
-    new_value = Memory(val, address)
-    constant_table[val] = new_value
+    address = get_new_constant(type)
+    new_v = Memory(address, val)
+    constant_table[val] = new_v
     return address
 
-def get_next_global(token):
+def get_new_global(token):
     if(token == "I"):
         global GLOBAL_INT
         GLOBAL_INT += 1
@@ -87,7 +90,7 @@ def get_next_global(token):
         return GLOBAL_CHAR - 1
         
 # Gets the next local
-def get_next_local(token):
+def get_new_local(token):
     if(token == "I"):
         global LOCAL_INT
         LOCAL_INT += 1
@@ -116,7 +119,7 @@ def get_next_local(token):
             raise Exception("ERROR: LOCAL CHAR MEMORY EXCEEDED") 
         return LOCAL_CHAR - 1
         
-def get_next_temporal(token):
+def get_new_temporal(token):
     if(token == "I"):
         global TEMP_INT
         TEMP_INT += 1
@@ -146,7 +149,7 @@ def get_next_temporal(token):
         return TEMP_CHAR - 1
         
 # Get next constant
-def get_next_constant(token):
+def get_new_constant(token):
     if(token == "I"):
         global CONST_INT
         CONST_INT += 1

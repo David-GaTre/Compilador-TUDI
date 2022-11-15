@@ -2,7 +2,7 @@ from lexer import LexerTudi, Token
 from dir_vars import FunctionsDirectory
 from sem_cube import SemanticCube
 from quadruples import QuadrupleGenerator, type_to_char, char_to_type
-from memory import get_next_global, get_next_local, get_constant_address
+from memory import get_new_global, get_new_local, get_constant_address, constant_table
 
 import ply.yacc as yacc
 
@@ -37,6 +37,10 @@ class ParserTudi(object):
                 else:
                     print('\t-', func_item, ':', values)
             print()
+        
+        print("Constant table:")
+        print(constant_table)
+        print()
 
         self.quadruple_gen.print_quadruples()
 
@@ -70,9 +74,9 @@ class ParserTudi(object):
         # Checar por nombres de variables duplicadas en el scope actual
         for var_id in p[2]:
             if self.last_vars['scope'] == '0':
-                mem_address = get_next_global(type_to_char[self.last_vars['var_type']])
+                mem_address = get_new_global(type_to_char[self.last_vars['var_type']])
             else:
-                mem_address = get_next_local(type_to_char[self.last_vars['var_type']])
+                mem_address = get_new_local(type_to_char[self.last_vars['var_type']])
             if not self.func_dir.add_variable(self.last_vars['scope'], var_id.value, self.last_vars['var_type'], mem_address):
                 print(f'Error: Re-declaration of variable \'{var_id.value}\' at line: {var_id.lineno}')
                 raise Exception(f'Error: Re-declaration of variable \'{var_id.value}\' at line: {var_id.lineno}')
@@ -545,7 +549,6 @@ class ParserTudi(object):
         if len(p) == 2:
             # (Type, operand)
             self.quadruple_gen.add_operand(p[1][1], p[1][0])
-            print(p[1][0])
         p[0] = p[1]
 
     # Variables, literals, y llamadas a una función
@@ -632,7 +635,7 @@ class ParserTudi(object):
         # la declaración de un parámetro.
         # p[-1] es la producción en la que aparece nombre del parámetro
         # p[-2] es la producción en la que aparece el tipo de dato
-        mem_address = get_next_local(type_to_char[p[-2]])
+        mem_address = get_new_local(type_to_char[p[-2]])
 
         if not self.func_dir.add_param(self.last_vars['scope'], p[-1], p[-2], mem_address):
             print(f'Error: Re-declaration of function parameter \'{p[-1]}\'.')
