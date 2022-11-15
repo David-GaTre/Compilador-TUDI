@@ -63,27 +63,28 @@ def get_next_global(token):
         GLOBAL_INT += 1
         if GLOBAL_INT > GLOBAL_FLOAT_LIMIT:
             raise Exception("ERROR: GLOBAL INT MEMORY EXCEEDED")
-        return GLOBAL_INT
+        return GLOBAL_INT - 1
     
     elif (token == "F"):
         global GLOBAL_FLOAT
         GLOBAL_FLOAT += 1
         if GLOBAL_FLOAT > GLOBAL_BOOL_LIMIT:
             raise Exception("ERROR: GLOBAL FLOAT MEMORY EXCEEDED")
+        return GLOBAL_FLOAT - 1
 
-        return GLOBAL_FLOAT 
     elif (token == "B"):
         global GLOBAL_BOOL
         GLOBAL_BOOL += 1
         if GLOBAL_BOOL > GLOBAL_CHAR_LIMIT:
             raise Exception("ERROR: GLOBAL BOOL MEMORY EXCEEDED")
-        return GLOBAL_BOOL
+        return GLOBAL_BOOL - 1
+
     elif (token == "C"):
         global GLOBAL_CHAR
         GLOBAL_CHAR += 1
         if GLOBAL_CHAR > LOCAL_START:
             raise Exception("ERROR: GLOBAL CHAR MEMORY EXCEEDED")
-        return GLOBAL_CHAR
+        return GLOBAL_CHAR - 1
         
 # Gets the next local
 def get_next_local(token):
@@ -92,25 +93,28 @@ def get_next_local(token):
         LOCAL_INT += 1
         if LOCAL_INT > LOCAL_FLOAT_LIMIT:
             raise Exception("ERROR: LOCAL INT MEMORY EXCEEDED") 
-        return LOCAL_INT
+        return LOCAL_INT - 1
+
     elif (token == "F"):
         global LOCAL_FLOAT
         LOCAL_FLOAT += 1
         if LOCAL_FLOAT > LOCAL_BOOL_LIMIT:
             raise Exception("ERROR: LOCAL FLOAT MEMORY EXCEEDED") 
-        return LOCAL_FLOAT 
+        return LOCAL_FLOAT - 1
+
     elif (token == "B"):
         global LOCAL_BOOL
         LOCAL_BOOL += 1
         if LOCAL_BOOL > LOCAL_CHAR_LIMIT:
             raise Exception("ERROR: LOCAL BOOL MEMORY EXCEEDED") 
-        return LOCAL_BOOL
+        return LOCAL_BOOL - 1
+
     elif (token == "C"):
         global LOCAL_CHAR
         LOCAL_CHAR += 1
         if LOCAL_CHAR > TEMP_START:
             raise Exception("ERROR: LOCAL CHAR MEMORY EXCEEDED") 
-        return LOCAL_CHAR
+        return LOCAL_CHAR - 1
         
 def get_next_temporal(token):
     if(token == "I"):
@@ -118,25 +122,28 @@ def get_next_temporal(token):
         TEMP_INT += 1
         if TEMP_INT > TEMP_FLOAT_LIMIT:
             raise Exception("ERROR: TEMPORAL INT MEMORY EXCEEDED") 
-        return TEMP_INT
+        return TEMP_INT - 1
+
     elif (token == "F"):
         global TEMP_FLOAT
         TEMP_FLOAT += 1
         if TEMP_FLOAT > TEMP_BOOL_LIMIT:
             raise Exception("ERROR: TEMPORAL FLOAT MEMORY EXCEEDED") 
-        return TEMP_FLOAT 
+        return TEMP_FLOAT - 1
+
     elif (token == "B"):
         global TEMP_BOOL
         TEMP_BOOL += 1
         if TEMP_BOOL > TEMP_CHAR_LIMIT:
             raise Exception("ERROR: TEMPORAL BOOL MEMORY EXCEEDED") 
-        return TEMP_BOOL
+        return TEMP_BOOL - 1
+
     elif (token == "C"):
         global TEMP_CHAR
         TEMP_CHAR += 1
         if TEMP_CHAR > CONST_START:
             raise Exception("ERROR: TEMPORAL CHAR MEMORY EXCEEDED") 
-        return TEMP_CHAR
+        return TEMP_CHAR - 1
         
 # Get next constant
 def get_next_constant(token):
@@ -145,22 +152,25 @@ def get_next_constant(token):
         CONST_INT += 1
         if CONST_INT > CONST_FLOAT_LIMIT:
             raise Exception("ERROR: CONSTANT INT MEMORY EXCEEDED") 
-        return CONST_INT
+        return CONST_INT - 1
+
     elif (token == "F"):
         global CONST_FLOAT
         CONST_FLOAT += 1
         if CONST_FLOAT > CONST_BOOL_LIMIT:
             raise Exception("ERROR: CONSTANT FLOAT MEMORY EXCEEDED") 
-        return CONST_FLOAT 
+        return CONST_FLOAT - 1
+
     elif (token == "B"):
         global CONST_BOOL
         CONST_BOOL += 1
         if CONST_BOOL > CONST_CHAR_LIMIT:
             raise Exception("ERROR: CONSTANT BOOL MEMORY EXCEEDED") 
-        return CONST_BOOL
+        return CONST_BOOL - 1
+
     elif (token == "C"):
         global CONST_CHAR
         CONST_CHAR += 1
         if CONST_CHAR > CONST_LIMIT:
             raise Exception("ERROR: CONSTANT CHAR MEMORY EXCEEDED") 
-        return CONST_CHAR
+        return CONST_CHAR - 1
