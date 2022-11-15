@@ -2,6 +2,7 @@ from lexer import LexerTudi, Token
 from dir_vars import FunctionsDirectory
 from sem_cube import SemanticCube
 from quadruples import QuadrupleGenerator, type_to_char, char_to_type
+from memory import get_new_global, get_new_local, get_constant_address, constant_table
 
 import ply.yacc as yacc
 
@@ -36,6 +37,10 @@ class ParserTudi(object):
                 else:
                     print('\t-', func_item, ':', values)
             print()
+        
+        print("Constant table:")
+        print(constant_table)
+        print()
 
         self.quadruple_gen.print_quadruples()
 
@@ -68,7 +73,11 @@ class ParserTudi(object):
 
         # Checar por nombres de variables duplicadas en el scope actual
         for var_id in p[2]:
-            if not self.func_dir.add_variable(self.last_vars['scope'], var_id.value, self.last_vars['var_type']):
+            if self.last_vars['scope'] == '0':
+                mem_address = get_new_global(type_to_char[self.last_vars['var_type']])
+            else:
+                mem_address = get_new_local(type_to_char[self.last_vars['var_type']])
+            if not self.func_dir.add_variable(self.last_vars['scope'], var_id.value, self.last_vars['var_type'], mem_address):
                 print(f'Error: Re-declaration of variable \'{var_id.value}\' at line: {var_id.lineno}')
                 raise Exception(f'Error: Re-declaration of variable \'{var_id.value}\' at line: {var_id.lineno}')
 
@@ -219,8 +228,9 @@ class ParserTudi(object):
             self.quadruple_gen.add_quad_from_parser("GOSUB", None, None, func["name"])
             # Guarda valor si no es void
             if func['return_type'] != "void":
-                self.quadruple_gen.add_assignment(self.quadruple_gen.get_next_temp(), func["name"])
-                p[0] = ['T' + str(self.quadruple_gen.temp_vars), type_to_char[func['return_type']], p[0]]
+                t = self.quadruple_gen.get_next_temp(func['return_type'])
+                self.quadruple_gen.add_assignment(t, func["name"])
+                p[0] = [t, type_to_char[func['return_type']], p[0]]
             else:
                 p[0] = [func["name"], type_to_char[func['return_type']], p[0]] # Dummy value in the meantime
         elif p[1] == 'Read':
@@ -555,17 +565,21 @@ class ParserTudi(object):
     # Enteros
     def p_int(self, p):
         '''int : INT_LITERAL'''
-        p[0] = [p[1], 'I']
+        address = get_constant_address(p[1], 'I')
+        p[0] = [address, 'I']
+
 
     # Flotantes
     def p_float(self, p):
         '''float : FLOAT_LITERAL'''
-        p[0] = [p[1], 'F']
+        address = get_constant_address(p[1], 'F')
+        p[0] = [address, 'F']
 
     # Booleanos
     def p_bool(self, p):
         '''bool : BOOL_LITERAL'''
-        p[0] = [p[1], 'B']
+        address = get_constant_address(p[1], 'B')
+        p[0] = [address, 'B']
 
     def p_seen_op(self, p):
         '''seen_op : '''
@@ -602,7 +616,7 @@ class ParserTudi(object):
             raise Exception(f'Error: Variable \'{p[1]}\' at line {p.lineno(1)} was not declared.')
 
         var = {"name": p[1]} | self.func_dir.find_variable(self.last_vars['scope'], p[1])
-        p[0] = [p[1], type_to_char[var["type"]]]
+        p[0] = [var['address'], type_to_char[var["type"]]]
 
     def p_seen_dec_func(self, p):
         '''seen_dec_func :'''
@@ -621,7 +635,9 @@ class ParserTudi(object):
         # la declaración de un parámetro.
         # p[-1] es la producción en la que aparece nombre del parámetro
         # p[-2] es la producción en la que aparece el tipo de dato
-        if not self.func_dir.add_param(self.last_vars['scope'], p[-1], p[-2]):
+        mem_address = get_new_local(type_to_char[p[-2]])
+
+        if not self.func_dir.add_param(self.last_vars['scope'], p[-1], p[-2], mem_address):
             print(f'Error: Re-declaration of function parameter \'{p[-1]}\'.')
             raise Exception(f'Error: Re-declaration of function parameter \'{p[-1]}\'.')
 
