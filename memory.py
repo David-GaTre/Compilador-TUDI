@@ -45,11 +45,13 @@ class VirtualMemory():
         self.global_float_count = GLOBAL_FLOAT
         self.global_bool_count = GLOBAL_BOOL
         self.global_char_count = GLOBAL_CHAR
+        # TODO: Metodo para resetear local y temporal
         # Locales
         self.local_int_count = LOCAL_INT
         self.local_float_count = LOCAL_FLOAT
         self.local_bool_count = LOCAL_BOOL
         self.local_char_count = LOCAL_CHAR
+        # TODO: Metodo para resetear local y temporal
         # Temporales
         self.temp_int_count = TEMP_INT
         self.temp_float_count = TEMP_FLOAT
