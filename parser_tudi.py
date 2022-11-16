@@ -2,6 +2,7 @@ from lexer import LexerTudi, Token
 from dir_vars import FunctionsDirectory
 from sem_cube import SemanticCube
 from quadruples import QuadrupleGenerator, type_to_char, char_to_type
+from memory import VirtualMemory
 
 import ply.yacc as yacc
 
@@ -22,7 +23,7 @@ class ParserTudi(object):
     # - Declaración de variables globales
     # - Definición de funciones
     def p_game(self, p):
-        '''game : GAME ID ';' CANVAS ASSIGN_OP INT_LITERAL ',' INT_LITERAL ';' game_vars game_funcs'''
+        '''game : GAME ID ';' CANVAS ASSIGN_OP int ',' int ';' game_vars game_funcs'''
         p[0] = "Aceptado"
         print("Todo valido")
 
@@ -36,6 +37,10 @@ class ParserTudi(object):
                 else:
                     print('\t-', func_item, ':', values)
             print()
+        
+        print("Constant table:")
+        print(self.virtual_mem.constant_table)
+        print()
 
         self.quadruple_gen.print_quadruples()
 
@@ -46,22 +51,11 @@ class ParserTudi(object):
 
     # Definición de funciones:
     # - Funciones definidas por el usuario (opcionales)
-    # - Llenar funciones Start y Update de TUDI (opcionales)
+    # - Llenar funciones Start y Update de TUDI (obligatorias)
     #   con código del usuario
     def p_game_funcs(self, p):
         '''game_funcs : declare_func game_funcs
-                      | game_start'''
-
-    # Definición de función Start de TUDI (opcional)
-    # Continúa con función Update de TUDI
-    def p_game_start(self, p):
-        '''game_start : func_start game_update
-                      | game_update'''
-
-    # Definición de función Update de TUDI (opcional)
-    def p_game_update(self, p):
-        '''game_update : func_update
-                       | empty'''
+                      | func_start func_update'''
 
     # Bloque de declaración de variables
     def p_block_vars(self, p):
@@ -75,11 +69,16 @@ class ParserTudi(object):
     # Declara 1 o más variables de un tipo de dato en común
     def p_declare_var(self, p):
         '''declare_var : type list_vars ';' '''
-        self.last_vars['var_type'] = p[1]
+        self.last_vars['var_type'] = p[1][0]
 
         # Checar por nombres de variables duplicadas en el scope actual
         for var_id in p[2]:
-            if not self.func_dir.add_variable(self.last_vars['scope'], var_id.value, self.last_vars['var_type']):
+            if self.last_vars['scope'] == '0':
+                mem_address = self.virtual_mem.get_new_global(type_to_char[self.last_vars['var_type']], p[1][1])
+            else:
+                mem_address = self.virtual_mem.get_new_local(type_to_char[self.last_vars['var_type']], p[1][1])
+
+            if not self.func_dir.add_variable(self.last_vars['scope'], var_id.value, self.last_vars['var_type'], mem_address):
                 print(f'Error: Re-declaration of variable \'{var_id.value}\' at line: {var_id.lineno}')
                 raise Exception(f'Error: Re-declaration of variable \'{var_id.value}\' at line: {var_id.lineno}')
 
@@ -103,6 +102,7 @@ class ParserTudi(object):
     # - Código de la función
     def p_declare_func(self, p):
         '''declare_func : FUNC ID ':' func_type seen_dec_func '(' list_params ')' '{' block_vars_code '}' '''
+        self.quadruple_gen.add_quad_from_parser("ENDFUNC", None, None, None)
 
     # Definición de función Start de TUDI:
     # - Si está presente en el programa, la función Start es
@@ -131,7 +131,10 @@ class ParserTudi(object):
     def p_func_type(self, p):
         '''func_type : type
                      | VOID '''
-        p[0] = p[1]
+        if len(p[1]) == 2:
+            p[0] = p[1]
+        else:
+            p[0] = [p[1], 0]
 
     # Bloque de código con posibles variables, puede incluir:
     # - Bloque de declaración de variables
@@ -169,7 +172,17 @@ class ParserTudi(object):
     # Estatuto de retorno:
     # - Regresa una expresión
     def p_return(self, p):
-        '''return : RETURN god_exp seen_god_exp '''
+        '''return : RETURN god_exp '''
+        # Checar que se está en una función que regresa un valor y que este sea del mismo tipo
+        if not self.func_dir.find_function(self.last_vars['scope']):
+            raise Exception(f"Something went wrong... at line: {p.lineno(1)}")
+
+        func = self.func_dir.find_function(self.last_vars['scope'])
+        t_type, operand = self.quadruple_gen.pop_operand()
+        if type_to_char[func["return_type"]] != t_type:
+            raise Exception(f"Return expected a value of type {func['return_type']}, but got {char_to_type[t_type]} at line: {p.lineno(1)}")
+
+        self.quadruple_gen.add_quad_from_parser("RET", None, None, operand)
 
     # Funciones built-in de I/O en TUDI:
     # - Print: Muestra en consola el argumento provisto
@@ -206,17 +219,24 @@ class ParserTudi(object):
 
     # Llamada a una función
     def p_call_func(self, p):
-        '''call_func : ID '(' list_args ')'
+        '''call_func : ID call_neuro_1 '(' call_neuro_2 seen_fact_open list_args_func ')' seen_fact_close
                      | io_func
                      | cast_func'''
-        # Checa que exista una función definida por el usuario
         if len(p) > 2:
-            if not self.func_dir.find_function(p[1]):
-                print(f'Error: Function \'{p[1]}\' at line {p.lineno(1)} was not declared.')
-                raise Exception(f'Error: Function \'{p[1]}\' at line {p.lineno(1)} was not declared.')
-
-            func = {'name': p[1]} | self.func_dir.find_function(p[1])
-            p[0] = [p[1], type_to_char[func['return_type']], p[0]] # Dummy value in the meantime
+            # Verifica que se pasaron la cantidad necesaria de parámetros
+            func, param_counter = self.quadruple_gen.params_stack.pop()
+            if param_counter != len(func["params"]):
+                print(f"Error: Function {func['name']} expected {len(func['params'])} arguments, but got {param_counter}.")
+                raise Exception(f"Error: Function {func['name']} expected {len(func['params'])} arguments, but got {param_counter}.")
+            # Genera GOSUB
+            self.quadruple_gen.add_quad_from_parser("GOSUB", None, None, func["name"])
+            # Guarda valor si no es void
+            if func['return_type'] != "void":
+                t = self.virtual_mem.get_new_temporal(type_to_char[func['return_type']])
+                self.quadruple_gen.add_assignment(t, func["return_address"])
+                p[0] = [t, type_to_char[func['return_type']], p[0]]
+            else:
+                p[0] = [func["name"], type_to_char[func['return_type']], p[0]] # Dummy value in the meantime
         elif p[1] == 'Read':
             p[0] = [p[1], 'C', p[0]] # Dummy value and type in the meantime
         elif p[1] == 'int':
@@ -227,6 +247,41 @@ class ParserTudi(object):
             p[0] = [p[1], 'B', p[0]] # Dummy value in the meantime
         else:
             p[0] = [p[1], 'V', p[0]] # Dummy value in the meantime
+
+    def p_call_neuro_1(self, p):
+        '''call_neuro_1 : '''
+        # Checa que exista una función definida por el usuario
+        # p[-1] es la producción en la que aparece el nombre de la función
+        if not self.func_dir.find_function(p[-1]):
+            print(f'Error: Function \'{p[-1]}\' at line {p.lineno(-1)} was not declared.')
+            raise Exception(f'Error: Function \'{p[-1]}\' at line {p.lineno(-1)} was not declared.')
+        func = {'name': p[-1]} | self.func_dir.find_function(p[-1])
+        p[0] = func
+
+    def p_call_neuro_2(self, p):
+        '''call_neuro_2 : '''
+        # Genera ERA
+        # p[-2] es la producción en la que aparecen los atributos de la función
+        self.quadruple_gen.add_quad_from_parser("ERA", None, None, p[-2]["name"])
+        self.quadruple_gen.params_stack.append([p[-2], 0])
+
+    def p_call_neuro_3(self, p):
+        '''call_neuro_3 : '''
+        # Pop
+        t_type, operand = self.quadruple_gen.pop_operand()
+        # Verifica el parametro
+        func, param_counter = self.quadruple_gen.params_stack[-1]
+        if param_counter >= len(func["params"]):
+            print(f"Error: Function {func['name']} expected {len(func['params'])} arguments, but got more than needed.")
+            raise Exception(f"Error: Function {func['name']} expected {len(func['params'])} arguments, but got more than needed.")
+
+        if t_type != type_to_char[func["params"][param_counter][0]]:
+            print(f"Error: Function {func['name']} expected argument {param_counter + 1} of type {func['params'][param_counter][0]}, but got {char_to_type[t_type]}.")
+            raise Exception(f"Error: Function {func['name']} expected argument {param_counter + 1} of type {func['params'][param_counter][0]}, but got {char_to_type[t_type]}.")
+
+        # Genera PARAM
+        self.quadruple_gen.add_quad_from_parser("PARAM", operand, None, f"par{param_counter + 1}")
+        self.quadruple_gen.params_stack[-1][1] += 1
 
     # Llamada a un método, requisitos:
     # - Los únicos métodos en TUDI pertenecen a una variable de tipo sprite
@@ -244,6 +299,16 @@ class ParserTudi(object):
         '''call_method_prima : SETPOSITION
                              | TRANSLATE
                              | SETCONTROLLABLE '''
+
+    # Lista de argumentos (expresiones)
+    def p_list_args_func(self, p):
+        '''list_args_func : god_exp call_neuro_3 list_args_func_prima
+                     | empty'''
+
+    # Añadir un argumento a la lista de argumentos
+    def p_list_args_func_prima(self, p):
+        '''list_args_func_prima : ',' god_exp call_neuro_3 list_args_func_prima
+                           | empty'''
 
     # Lista de argumentos (expresiones)
     def p_list_args(self, p):
@@ -406,23 +471,29 @@ class ParserTudi(object):
         #     p[0] = "-".join([p[1], p[2]])
         # else:
         #     p[0] = p[1]
-        p[0] = p[1]
+        p[0] = [p[1], p[2]]
 
     # En la declaración, los arreglos solamente
     # aceptan int literals para la definición del tamaño
     def p_type_dims(self, p):
-        '''type_dims : '[' INT_LITERAL ']'
-                     | '[' INT_LITERAL ',' INT_LITERAL ']'
+        '''type_dims : '[' int ']'
+                     | '[' int ',' int ']'
                      | empty'''
         if len(p) == 6:
-            p[0] = 'arr2d'
+            if p[2][2] <= 0 or p[4][2] <= 0:
+                raise Exception(f"Array dimensions must be greater than 0")
+            p[0] = p[2][2] * p[4][2]
         elif len(p) == 4:
-            p[0] = 'arr1d'
+            if p[2][2] <= 0:
+                raise Exception(f"Array dimensions must be greater than 0")
+            p[0] = p[2][2]
+        else:
+            p[0] = 1
 
     # Expresión (lógica, relacional, aritmética)
     def p_god_exp(self, p):
         '''god_exp : super_exp seen_super_exp god_exp_prima'''
-        self.quadruple_gen.finish_expression(sem_cube)
+        self.quadruple_gen.finish_expression(sem_cube, self.virtual_mem)
 
     def p_seen_god_exp(self, p):
         '''seen_god_exp : '''
@@ -432,7 +503,7 @@ class ParserTudi(object):
 
     def p_seen_super_exp(self, p):
         '''seen_super_exp : '''
-        self.quadruple_gen.check_stack_operand(arr_logicops, sem_cube)
+        self.quadruple_gen.check_stack_operand(arr_logicops, sem_cube, self.virtual_mem)
 
     # Operadores lógicos
     def p_god_exp_prima(self, p):
@@ -444,7 +515,7 @@ class ParserTudi(object):
 
     def p_seen_exp(self, p):
         '''seen_exp : '''
-        self.quadruple_gen.check_stack_operand(arr_relops, sem_cube)
+        self.quadruple_gen.check_stack_operand(arr_relops, sem_cube, self.virtual_mem)
 
     # Operadores relacionales
     def p_super_exp_prima(self, p):
@@ -456,7 +527,7 @@ class ParserTudi(object):
 
     def p_seen_term(self, p):
         '''seen_term : '''
-        self.quadruple_gen.check_stack_operand(["+", "-"], sem_cube)
+        self.quadruple_gen.check_stack_operand(["+", "-"], sem_cube, self.virtual_mem)
 
     # Operadores suma y resta
     def p_exp_prima(self, p):
@@ -469,7 +540,7 @@ class ParserTudi(object):
 
     def p_seen_fact(self, p):
         '''seen_fact : '''
-        self.quadruple_gen.check_stack_operand(["*", "/"], sem_cube)
+        self.quadruple_gen.check_stack_operand(["*", "/"], sem_cube, self.virtual_mem)
 
     # Operadores de multiplación y división
     def p_term_prima(self, p):
@@ -504,17 +575,20 @@ class ParserTudi(object):
     # Enteros
     def p_int(self, p):
         '''int : INT_LITERAL'''
-        p[0] = [p[1], 'I']
+        address = self.virtual_mem.get_constant_address(p[1], 'I')
+        p[0] = [address, 'I', p[1]]
 
     # Flotantes
     def p_float(self, p):
         '''float : FLOAT_LITERAL'''
-        p[0] = [p[1], 'F']
+        address = self.virtual_mem.get_constant_address(p[1], 'F')
+        p[0] = [address, 'F', p[1]]
 
     # Booleanos
     def p_bool(self, p):
         '''bool : BOOL_LITERAL'''
-        p[0] = [p[1], 'B']
+        address = self.virtual_mem.get_constant_address(p[1], 'B')
+        p[0] = [address, 'B', p[1]]
 
     def p_seen_op(self, p):
         '''seen_op : '''
@@ -551,7 +625,7 @@ class ParserTudi(object):
             raise Exception(f'Error: Variable \'{p[1]}\' at line {p.lineno(1)} was not declared.')
 
         var = {"name": p[1]} | self.func_dir.find_variable(self.last_vars['scope'], p[1])
-        p[0] = [p[1], type_to_char[var["type"]]]
+        p[0] = [var['address'], type_to_char[var["type"]]]
 
     def p_seen_dec_func(self, p):
         '''seen_dec_func :'''
@@ -560,9 +634,19 @@ class ParserTudi(object):
         # p[-1] es la producción en la que aparece el tipo de retorno
         # p[-3] es la producción en la que aparece el nombre de la función
         self.last_vars['scope'] = p[-3]
-        if not self.func_dir.add_function(self.last_vars['scope'], p[-1]):
+
+        if isinstance(p[-1], list):
+            return_type = p[-1][0]
+        else:
+            return_type = p[-1]
+        if not self.func_dir.add_function(self.last_vars['scope'], return_type, self.quadruple_gen.count_q):
             print(f'Error: Re-declaration of function \'{p[-3]}\'.')
             raise Exception(f'Error: Re-declaration of function \'{p[-3]}\'.')
+
+        # Agrega como variable global el nombre de la función como lo visto en clase
+        if return_type != "void":
+            mem_address = self.virtual_mem.get_new_global(type_to_char[return_type], p[-1][1])
+            self.func_dir.add_return_address(self.last_vars['scope'], mem_address)
 
     def p_seen_param(self, p):
         '''seen_param :'''
@@ -570,7 +654,9 @@ class ParserTudi(object):
         # la declaración de un parámetro.
         # p[-1] es la producción en la que aparece nombre del parámetro
         # p[-2] es la producción en la que aparece el tipo de dato
-        if not self.func_dir.add_param(self.last_vars['scope'], p[-1], p[-2]):
+        mem_address = self.virtual_mem.get_new_local(type_to_char[p[-2][0]])
+
+        if not self.func_dir.add_param(self.last_vars['scope'], p[-1], p[-2][0], mem_address):
             print(f'Error: Re-declaration of function parameter \'{p[-1]}\'.')
             raise Exception(f'Error: Re-declaration of function parameter \'{p[-1]}\'.')
 
@@ -589,6 +675,7 @@ class ParserTudi(object):
         self.func_dir = FunctionsDirectory()
         self.last_vars = {'scope': self.func_dir.GLOBAL_ENV, 'var_type': None}
         self.quadruple_gen = QuadrupleGenerator()
+        self.virtual_mem = VirtualMemory()
 
         self.lexer = lexer
         self.parser = yacc.yacc(module=self, **kwargs)

@@ -24,3 +24,5 @@ func Start : void () {
     mat[1 + 2, 2 * 2] = 34;
     mat[DoSomethingA() + 1, DoSomethingA() - 1] = 31;
 }
+
+func Update : void () {}

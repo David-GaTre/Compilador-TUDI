@@ -17,7 +17,7 @@ class QuadrupleGenerator():
         self.operand_stack = deque() 
         self.type_stack = deque() 
         self.goto_stack = deque()
-        self.goto_special_stack = deque()
+        self.params_stack = deque()
 
     # Añade una operador a la pila correspondiente
     def add_operator(self, operator):
@@ -40,13 +40,8 @@ class QuadrupleGenerator():
     def pop_operand(self):
         return self.type_stack.pop(), self.operand_stack.pop()
 
-    def get_next_temp(self):
-        # On the meantime returns string, wait for memory implementation
-        self.temp_vars += 1
-        return 'T' + str(self.temp_vars)
-
     # Utiliza un cubo semántico para validar que una expresión es correcta
-    def check_stack_operand(self, arr_operators, sem_cube):
+    def check_stack_operand(self, arr_operators, sem_cube, virtual_mem):
         if len(self.operator_stack) > 0 and (self.operator_stack[-1] in arr_operators):
             right_oper = self.operand_stack.pop()
             right_type = self.type_stack.pop()
@@ -61,7 +56,7 @@ class QuadrupleGenerator():
             if result_t == "ERROR: Not valid operation":
                 raise Exception(f"TYPE MISMATCH: {left_oper} ({char_to_type[left_type]}) {operator} {right_oper} ({char_to_type[right_type]})")
 
-            t = self.get_next_temp()
+            t = virtual_mem.get_new_temporal(type_to_char[result_t])
             
             self.quadruples.append(Quadruple(self.count_q, operator, left_oper, right_oper, t))
             self.count_q += 1
@@ -70,7 +65,7 @@ class QuadrupleGenerator():
             self.operand_stack.append(t)
             self.type_stack.append(result_t)
 
-    def finish_expression(self, sem_cube):
+    def finish_expression(self, sem_cube, virtual_mem):
         while len(self.operator_stack) > 0 and self.operator_stack[-1] != "|":
             right_oper = self.operand_stack.pop()
             right_type = self.type_stack.pop()
@@ -85,7 +80,7 @@ class QuadrupleGenerator():
             if result_t == "ERROR: Not valid operation":
                 raise Exception("TYPE MISMATCH")
 
-            t = self.get_next_temp()
+            t = virtual_mem.get_new_temporal(type_to_char[result_t])
 
             self.quadruples.append(Quadruple(self.count_q, operator, left_oper, right_oper, t))
             self.count_q += 1

@@ -1,5 +1,11 @@
 # TUDI
 
+## Avance 6
+Creación de memoria virtual en todos los niveles y sustitución con memorias virtuales en los cuádruplos. Código de funciones y sus cuádruplos esta terminado.
+
+Queda pendiente primeras iteraciones de máquina virtual y cuádruplos de arreglos.
+
+
 ## Avance 5
 Se implementan borradores de los cuadruplos de los condicionales (if - else - else if) y de ciclo while. Se generaron funciones adicionales para generar cuadruplos desde el parser.
 
