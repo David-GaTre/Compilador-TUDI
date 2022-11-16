@@ -2,7 +2,7 @@ from lexer import LexerTudi, Token
 from dir_vars import FunctionsDirectory
 from sem_cube import SemanticCube
 from quadruples import QuadrupleGenerator, type_to_char, char_to_type
-from memory import get_new_global, get_new_local, get_constant_address, constant_table
+from memory import VirtualMemory
 
 import ply.yacc as yacc
 
@@ -23,7 +23,7 @@ class ParserTudi(object):
     # - Declaración de variables globales
     # - Definición de funciones
     def p_game(self, p):
-        '''game : GAME ID ';' CANVAS ASSIGN_OP INT_LITERAL ',' INT_LITERAL ';' game_vars game_funcs'''
+        '''game : GAME ID ';' CANVAS ASSIGN_OP int ',' int ';' game_vars game_funcs'''
         p[0] = "Aceptado"
         print("Todo valido")
 
@@ -39,7 +39,7 @@ class ParserTudi(object):
             print()
         
         print("Constant table:")
-        print(constant_table)
+        print(self.virtual_mem.constant_table)
         print()
 
         self.quadruple_gen.print_quadruples()
@@ -69,14 +69,15 @@ class ParserTudi(object):
     # Declara 1 o más variables de un tipo de dato en común
     def p_declare_var(self, p):
         '''declare_var : type list_vars ';' '''
-        self.last_vars['var_type'] = p[1]
+        self.last_vars['var_type'] = p[1][0]
 
         # Checar por nombres de variables duplicadas en el scope actual
         for var_id in p[2]:
             if self.last_vars['scope'] == '0':
-                mem_address = get_new_global(type_to_char[self.last_vars['var_type']])
+                mem_address = self.virtual_mem.get_new_global(type_to_char[self.last_vars['var_type']], p[1][1])
             else:
-                mem_address = get_new_local(type_to_char[self.last_vars['var_type']])
+                mem_address = self.virtual_mem.get_new_local(type_to_char[self.last_vars['var_type']], p[1][1])
+
             if not self.func_dir.add_variable(self.last_vars['scope'], var_id.value, self.last_vars['var_type'], mem_address):
                 print(f'Error: Re-declaration of variable \'{var_id.value}\' at line: {var_id.lineno}')
                 raise Exception(f'Error: Re-declaration of variable \'{var_id.value}\' at line: {var_id.lineno}')
@@ -130,7 +131,10 @@ class ParserTudi(object):
     def p_func_type(self, p):
         '''func_type : type
                      | VOID '''
-        p[0] = p[1]
+        if len(p[1]) == 2:
+            p[0] = p[1]
+        else:
+            p[0] = [p[1], 0]
 
     # Bloque de código con posibles variables, puede incluir:
     # - Bloque de declaración de variables
@@ -228,8 +232,8 @@ class ParserTudi(object):
             self.quadruple_gen.add_quad_from_parser("GOSUB", None, None, func["name"])
             # Guarda valor si no es void
             if func['return_type'] != "void":
-                t = self.quadruple_gen.get_next_temp(func['return_type'])
-                self.quadruple_gen.add_assignment(t, func["name"])
+                t = self.virtual_mem.get_new_temporal(type_to_char[func['return_type']])
+                self.quadruple_gen.add_assignment(t, func["return_address"])
                 p[0] = [t, type_to_char[func['return_type']], p[0]]
             else:
                 p[0] = [func["name"], type_to_char[func['return_type']], p[0]] # Dummy value in the meantime
@@ -467,23 +471,29 @@ class ParserTudi(object):
         #     p[0] = "-".join([p[1], p[2]])
         # else:
         #     p[0] = p[1]
-        p[0] = p[1]
+        p[0] = [p[1], p[2]]
 
     # En la declaración, los arreglos solamente
     # aceptan int literals para la definición del tamaño
     def p_type_dims(self, p):
-        '''type_dims : '[' INT_LITERAL ']'
-                     | '[' INT_LITERAL ',' INT_LITERAL ']'
+        '''type_dims : '[' int ']'
+                     | '[' int ',' int ']'
                      | empty'''
         if len(p) == 6:
-            p[0] = 'arr2d'
+            if p[2][2] <= 0 or p[4][2] <= 0:
+                raise Exception(f"Array dimensions must be greater than 0")
+            p[0] = p[2][2] * p[4][2]
         elif len(p) == 4:
-            p[0] = 'arr1d'
+            if p[2][2] <= 0:
+                raise Exception(f"Array dimensions must be greater than 0")
+            p[0] = p[2][2]
+        else:
+            p[0] = 1
 
     # Expresión (lógica, relacional, aritmética)
     def p_god_exp(self, p):
         '''god_exp : super_exp seen_super_exp god_exp_prima'''
-        self.quadruple_gen.finish_expression(sem_cube)
+        self.quadruple_gen.finish_expression(sem_cube, self.virtual_mem)
 
     def p_seen_god_exp(self, p):
         '''seen_god_exp : '''
@@ -493,7 +503,7 @@ class ParserTudi(object):
 
     def p_seen_super_exp(self, p):
         '''seen_super_exp : '''
-        self.quadruple_gen.check_stack_operand(arr_logicops, sem_cube)
+        self.quadruple_gen.check_stack_operand(arr_logicops, sem_cube, self.virtual_mem)
 
     # Operadores lógicos
     def p_god_exp_prima(self, p):
@@ -505,7 +515,7 @@ class ParserTudi(object):
 
     def p_seen_exp(self, p):
         '''seen_exp : '''
-        self.quadruple_gen.check_stack_operand(arr_relops, sem_cube)
+        self.quadruple_gen.check_stack_operand(arr_relops, sem_cube, self.virtual_mem)
 
     # Operadores relacionales
     def p_super_exp_prima(self, p):
@@ -517,7 +527,7 @@ class ParserTudi(object):
 
     def p_seen_term(self, p):
         '''seen_term : '''
-        self.quadruple_gen.check_stack_operand(["+", "-"], sem_cube)
+        self.quadruple_gen.check_stack_operand(["+", "-"], sem_cube, self.virtual_mem)
 
     # Operadores suma y resta
     def p_exp_prima(self, p):
@@ -530,7 +540,7 @@ class ParserTudi(object):
 
     def p_seen_fact(self, p):
         '''seen_fact : '''
-        self.quadruple_gen.check_stack_operand(["*", "/"], sem_cube)
+        self.quadruple_gen.check_stack_operand(["*", "/"], sem_cube, self.virtual_mem)
 
     # Operadores de multiplación y división
     def p_term_prima(self, p):
@@ -565,21 +575,20 @@ class ParserTudi(object):
     # Enteros
     def p_int(self, p):
         '''int : INT_LITERAL'''
-        address = get_constant_address(p[1], 'I')
-        p[0] = [address, 'I']
-
+        address = self.virtual_mem.get_constant_address(p[1], 'I')
+        p[0] = [address, 'I', p[1]]
 
     # Flotantes
     def p_float(self, p):
         '''float : FLOAT_LITERAL'''
-        address = get_constant_address(p[1], 'F')
-        p[0] = [address, 'F']
+        address = self.virtual_mem.get_constant_address(p[1], 'F')
+        p[0] = [address, 'F', p[1]]
 
     # Booleanos
     def p_bool(self, p):
         '''bool : BOOL_LITERAL'''
-        address = get_constant_address(p[1], 'B')
-        p[0] = [address, 'B']
+        address = self.virtual_mem.get_constant_address(p[1], 'B')
+        p[0] = [address, 'B', p[1]]
 
     def p_seen_op(self, p):
         '''seen_op : '''
@@ -625,9 +634,19 @@ class ParserTudi(object):
         # p[-1] es la producción en la que aparece el tipo de retorno
         # p[-3] es la producción en la que aparece el nombre de la función
         self.last_vars['scope'] = p[-3]
-        if not self.func_dir.add_function(self.last_vars['scope'], p[-1], self.quadruple_gen.count_q):
+
+        if isinstance(p[-1], list):
+            return_type = p[-1][0]
+        else:
+            return_type = p[-1]
+        if not self.func_dir.add_function(self.last_vars['scope'], return_type, self.quadruple_gen.count_q):
             print(f'Error: Re-declaration of function \'{p[-3]}\'.')
             raise Exception(f'Error: Re-declaration of function \'{p[-3]}\'.')
+
+        # Agrega como variable global el nombre de la función como lo visto en clase
+        if return_type != "void":
+            mem_address = self.virtual_mem.get_new_global(type_to_char[return_type], p[-1][1])
+            self.func_dir.add_return_address(self.last_vars['scope'], mem_address)
 
     def p_seen_param(self, p):
         '''seen_param :'''
@@ -635,9 +654,9 @@ class ParserTudi(object):
         # la declaración de un parámetro.
         # p[-1] es la producción en la que aparece nombre del parámetro
         # p[-2] es la producción en la que aparece el tipo de dato
-        mem_address = get_new_local(type_to_char[p[-2]])
+        mem_address = self.virtual_mem.get_new_local(type_to_char[p[-2][0]])
 
-        if not self.func_dir.add_param(self.last_vars['scope'], p[-1], p[-2], mem_address):
+        if not self.func_dir.add_param(self.last_vars['scope'], p[-1], p[-2][0], mem_address):
             print(f'Error: Re-declaration of function parameter \'{p[-1]}\'.')
             raise Exception(f'Error: Re-declaration of function parameter \'{p[-1]}\'.')
 
@@ -656,6 +675,7 @@ class ParserTudi(object):
         self.func_dir = FunctionsDirectory()
         self.last_vars = {'scope': self.func_dir.GLOBAL_ENV, 'var_type': None}
         self.quadruple_gen = QuadrupleGenerator()
+        self.virtual_mem = VirtualMemory()
 
         self.lexer = lexer
         self.parser = yacc.yacc(module=self, **kwargs)

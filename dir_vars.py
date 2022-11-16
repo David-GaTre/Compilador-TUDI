@@ -37,6 +37,13 @@ class FunctionsDirectory:
         self.directory[func_name] = {'start': start, 'return_type': return_type, 'params': [], 'table': VariablesTable()}
         return True
 
+    def add_return_address(self, func_name: str, return_address: int) -> bool:
+        if func_name not in self.directory:
+            return False
+
+        self.directory[func_name]['return_address'] = return_address
+        return True
+
     def add_param(self, func_name: str, var_name: str, var_type: str, mem: int) -> bool:
         if func_name not in self.directory:
             return False
