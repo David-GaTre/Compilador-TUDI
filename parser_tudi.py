@@ -219,7 +219,7 @@ class ParserTudi(object):
 
     # Llamada a una función
     def p_call_func(self, p):
-        '''call_func : ID call_neuro_1 '(' call_neuro_2 list_args_func ')'
+        '''call_func : ID call_neuro_1 '(' call_neuro_2 seen_fact_open list_args_func ')' seen_fact_close
                      | io_func
                      | cast_func'''
         if len(p) > 2:
