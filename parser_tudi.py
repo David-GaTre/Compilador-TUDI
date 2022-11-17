@@ -103,18 +103,24 @@ class ParserTudi(object):
     def p_declare_func(self, p):
         '''declare_func : FUNC ID ':' func_type seen_dec_func '(' list_params ')' '{' block_vars_code '}' '''
         self.quadruple_gen.add_quad_from_parser("ENDFUNC", None, None, None)
+        self.func_dir.add_resources(p[2], self.virtual_mem.get_temps_and_locals())
+        self.virtual_mem.reset_temps_and_locals()
 
     # Definición de función Start de TUDI:
     # - Si está presente en el programa, la función Start es
     #   la primera en ejecutarse
     def p_func_start(self, p):
         '''func_start : FUNC START ':' VOID seen_dec_func '(' ')' '{' block_vars_code '}' '''
+        self.func_dir.add_resources(p[2], self.virtual_mem.get_temps_and_locals())
+        self.virtual_mem.reset_temps_and_locals()
 
     # Definición de función Update de TUDI:
     # - Si está presente en el programa, la función Update es
     #   la función que está siendo ejecutada constantemente (loop)
     def p_func_update(self, p):
         '''func_update : FUNC UPDATE ':' VOID seen_dec_func '(' ')' '{' block_vars_code '}' '''
+        self.func_dir.add_resources(p[2], self.virtual_mem.get_temps_and_locals())
+        self.virtual_mem.reset_temps_and_locals()
 
     # Lista de parámetros de una función
     def p_list_params(self, p):
