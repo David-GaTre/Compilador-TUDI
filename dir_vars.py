@@ -44,6 +44,13 @@ class FunctionsDirectory:
         self.directory[func_name]['return_address'] = return_address
         return True
 
+    def add_resources(self, func_name: str, resources: dict) -> bool:
+        if func_name not in self.directory:
+            return False
+
+        self.directory[func_name]['resources'] = resources
+        return True
+
     def add_param(self, func_name: str, var_name: str, var_type: str, mem: int) -> bool:
         if func_name not in self.directory:
             return False

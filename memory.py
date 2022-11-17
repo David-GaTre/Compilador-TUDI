@@ -45,13 +45,11 @@ class VirtualMemory():
         self.global_float_count = GLOBAL_FLOAT
         self.global_bool_count = GLOBAL_BOOL
         self.global_char_count = GLOBAL_CHAR
-        # TODO: Metodo para resetear local y temporal
         # Locales
         self.local_int_count = LOCAL_INT
         self.local_float_count = LOCAL_FLOAT
         self.local_bool_count = LOCAL_BOOL
         self.local_char_count = LOCAL_CHAR
-        # TODO: Metodo para resetear local y temporal
         # Temporales
         self.temp_int_count = TEMP_INT
         self.temp_float_count = TEMP_FLOAT
@@ -168,6 +166,35 @@ class VirtualMemory():
                 raise Exception("ERROR: CONSTANT CHAR MEMORY EXCEEDED")
             self.const_char_count += increment
             return current_next
+
+    # Regresa el conteo actual de variables locales y temporales
+    def get_temps_and_locals(self) -> dict:
+        count = {
+            # Locales
+            'LI': self.local_int_count - LOCAL_INT,
+            'LF': self.local_float_count - LOCAL_FLOAT,
+            'LB': self.local_bool_count - LOCAL_BOOL,
+            'LC': self.local_char_count - LOCAL_CHAR,
+            # Temporales
+            'TI': self.temp_int_count - TEMP_INT,
+            'TF': self.temp_float_count - TEMP_FLOAT,
+            'TB': self.temp_bool_count - TEMP_BOOL,
+            'TC': self.temp_char_count - TEMP_CHAR,
+        }
+        return count
+
+    # Resetea el conteo de variables locales y temporales
+    def reset_temps_and_locals(self) -> None:
+        # Locales
+        self.local_int_count = LOCAL_INT
+        self.local_float_count = LOCAL_FLOAT
+        self.local_bool_count = LOCAL_BOOL
+        self.local_char_count = LOCAL_CHAR
+        # Temporales
+        self.temp_int_count = TEMP_INT
+        self.temp_float_count = TEMP_FLOAT
+        self.temp_bool_count = TEMP_BOOL
+        self.temp_char_count = TEMP_CHAR
 
     # Usar para tabla de tabla de constantes en un diccionario
     def get_constant_address(self, val: str, t_type: str, increment: int = 1) -> int:
