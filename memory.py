@@ -1,4 +1,6 @@
 from collections import deque 
+from quadruples import type_to_char, char_to_type
+
 
 # NUMERIC CONSTANTS FOR MEMORY ADDRESSING
 GLOBAL_INT, GLOBAL_INT_LIMIT= 0,0
@@ -45,9 +47,9 @@ class FunctionMemory():
         self.temp_memory = temp_memory.copy() # Due to mutable nature
         self.params = params.copy() # Due to mutable nature
     def __str__(self):
-        return f'Func Name: {self.func_name}, Memory: {self.memory_list}, Params: {self.params}\n'
+        return f'Func Name: {self.func_name}, Memory: {self.temp_memory}, Params: {self.params}\n'
     def __repr__(self):
-        return f'Func Name: {self.func_name}, Memory: {self.memory_list}, Params: {self.params}\n'
+        return f'Func Name: {self.func_name}, Memory: {self.temp_memory}, Params: {self.params}\n'
 
 class VirtualMemory():
     def __init__(self):
@@ -81,19 +83,20 @@ class VirtualMemory():
         self.program_functions = {}
 
     def start_memory(self, func_dir):
-        for func_name in func_dir:
-            func = func_dir[func_name]
+        for func_name, func in func_dir.directory.items():
             memory_dict = {}
-            vars = func.vars
-            params = {}
-            func_params = func.params
+            vars = func['table'].table
             for var in vars.values():
-                memory_dict[var.address] = Memory(var.address, get_default(var.type))
-            for par in func_params:
-                params[par.address] = Memory(par.address, get_default(par.type))
+                memory_dict[var['address']] = Memory(var['address'], get_default(type_to_char[var['type']]))
+            params = {}
+            if func_name != '0':
+                func_params = func['params']
+                for par in func_params:
+                    # sample of par: ('int', 'p', 20000)
+                    params[par[2]] = Memory(par[2], get_default(type_to_char[par[0]]))
             self.program_functions[func_name] = FunctionMemory(func_name, memory_dict, params)     
             if func_name == "0":
-                self.func_call_stack.append(FunctionMemory(func_name, memory_dict, params))
+                self.func_call_stack.append(FunctionMemory(func_name, memory_dict, params))        
 
     def new_function_memory(self, func_id):
         temp_func = self.program_functions[func_id]
