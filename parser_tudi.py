@@ -73,12 +73,20 @@ class ParserTudi(object):
 
         # Checar por nombres de variables duplicadas en el scope actual
         for var_id in p[2]:
-            if self.last_vars['scope'] == '0':
-                mem_address = self.virtual_mem.get_new_global(type_to_char[self.last_vars['var_type']], p[1][1])
-            else:
-                mem_address = self.virtual_mem.get_new_local(type_to_char[self.last_vars['var_type']], p[1][1])
+            increment = p[1][1][0]
+            dims = p[1][1][1]
 
-            if not self.func_dir.add_variable(self.last_vars['scope'], var_id.value, self.last_vars['var_type'], mem_address):
+            if self.last_vars['scope'] == '0':
+                mem_address = self.virtual_mem.get_new_global(type_to_char[self.last_vars['var_type']], increment)
+            else:
+                mem_address = self.virtual_mem.get_new_local(type_to_char[self.last_vars['var_type']], increment)
+
+            # Se guarda la dirección de memoria si es un arreglo,
+            # pueste que es la constante que se usará para la dirección base
+            if dims is not None:
+                self.virtual_mem.get_constant_address(mem_address, 'I')
+
+            if not self.func_dir.add_variable(self.last_vars['scope'], var_id.value, self.last_vars['var_type'], mem_address, dims):
                 print(f'Error: Re-declaration of variable \'{var_id.value}\' at line: {var_id.lineno}')
                 raise Exception(f'Error: Re-declaration of variable \'{var_id.value}\' at line: {var_id.lineno}')
 
@@ -144,6 +152,8 @@ class ParserTudi(object):
                      | VOID '''
         if len(p[1]) == 2:
             p[0] = p[1]
+            if p[1][1][1] is not None:
+                raise Exception(f"Functions return values cannot be arrays")
         else:
             p[0] = [p[1], 0]
 
@@ -493,13 +503,29 @@ class ParserTudi(object):
         if len(p) == 6:
             if p[2][2] <= 0 or p[4][2] <= 0:
                 raise Exception(f"Array dimensions must be greater than 0")
-            p[0] = p[2][2] * p[4][2]
+            m0 = p[2][2] * p[4][2]
+            bound1 = self.virtual_mem.get_constant_address(p[2][2], 'I')
+            bound2 = self.virtual_mem.get_constant_address(p[4][2], 'I')
+            m1 = self.virtual_mem.get_constant_address(p[4][2], 'I')
+            zero = self.virtual_mem.get_constant_address(0, 'I')
+
+            # Limite superior 1 y m1
+            dim1 = (bound1, m1)
+            # Limite superior 2 y (-K)
+            dim2 = (bound2, zero)
+
+            p[0] = (m0, [dim1, dim2])
         elif len(p) == 4:
             if p[2][2] <= 0:
                 raise Exception(f"Array dimensions must be greater than 0")
-            p[0] = p[2][2]
+            bound1 = self.virtual_mem.get_constant_address(p[2][2], 'I')
+            zero = self.virtual_mem.get_constant_address(0, 'I')
+
+            # Limite superior 1 y (-K)
+            dim1 = (bound1, zero)
+            p[0] = (p[2][2], [dim1])
         else:
-            p[0] = 1
+            p[0] = (1, None)
 
     # Expresión (lógica, relacional, aritmética)
     def p_god_exp(self, p):
@@ -656,7 +682,7 @@ class ParserTudi(object):
 
         # Agrega como variable global el nombre de la función como lo visto en clase
         if return_type != "void":
-            mem_address = self.virtual_mem.get_new_global(type_to_char[return_type], p[-1][1])
+            mem_address = self.virtual_mem.get_new_global(type_to_char[return_type], p[-1][1][0])
             self.func_dir.add_return_address(self.last_vars['scope'], mem_address)
 
     def p_seen_param(self, p):
@@ -665,9 +691,13 @@ class ParserTudi(object):
         # la declaración de un parámetro.
         # p[-1] es la producción en la que aparece nombre del parámetro
         # p[-2] es la producción en la que aparece el tipo de dato
+        dims = p[-2][1][1]
+        if dims is not None:
+            raise Exception(f"Functions parameters cannot be arrays")
+
         mem_address = self.virtual_mem.get_new_local(type_to_char[p[-2][0]])
 
-        if not self.func_dir.add_param(self.last_vars['scope'], p[-1], p[-2][0], mem_address):
+        if not self.func_dir.add_param(self.last_vars['scope'], p[-1], p[-2][0], mem_address, dims):
             print(f'Error: Re-declaration of function parameter \'{p[-1]}\'.')
             raise Exception(f'Error: Re-declaration of function parameter \'{p[-1]}\'.')
 
