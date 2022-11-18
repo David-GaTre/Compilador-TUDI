@@ -110,7 +110,13 @@ class ParserTudi(object):
     # - Código de la función
     def p_declare_func(self, p):
         '''declare_func : FUNC ID ':' func_type seen_dec_func '(' list_params ')' '{' block_vars_code '}' '''
-        self.quadruple_gen.add_quad_from_parser("ENDFUNC", None, None, None)
+        # Si hay valor de retorno, entonces el ENDFUNC tiene en la última casilla
+        # el tipo de retorno. Este es usado para detectar en ejecución, que si se llega
+        # a un quad así esta función no regreso nada y marcar error.
+        return_type = None
+        if isinstance(func_type, list):
+            return_type = p[-1][0]
+        self.quadruple_gen.add_quad_from_parser("ENDFUNC", None, None, return_type)
         self.func_dir.add_resources(p[2], self.virtual_mem.get_temps_and_locals())
         self.func_dir.clear_var_table(p[2])
         self.virtual_mem.reset_temps_and_locals()
