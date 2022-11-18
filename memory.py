@@ -38,6 +38,17 @@ class Memory():
     def __repr__(self):
         return f'Address: {self.address}, Value: {self.value}\n'
 
+class FunctionMemory():
+    def __init__(self, func_name='0', temp_memory={}, params={}):
+        self.func_name = func_name
+        self.prev_func = 0
+        self.temp_memory = temp_memory.copy() # Due to mutable nature
+        self.params = params.copy() # Due to mutable nature
+    def __str__(self):
+        return f'Func Name: {self.func_name}, Memory: {self.memory_list}, Params: {self.params}\n'
+    def __repr__(self):
+        return f'Func Name: {self.func_name}, Memory: {self.memory_list}, Params: {self.params}\n'
+
 class VirtualMemory():
     def __init__(self):
         # Globales
@@ -61,8 +72,43 @@ class VirtualMemory():
         self.const_bool_count = CONST_BOOL
         self.const_char_count = CONST_CHAR
         # Constant Table
-        self.constant_table= {}
+        self.constant_table = {} 
+        # Stack of function calling
+        self.func_call_stack = deque()
+        # Used for constants in the meantime
+        self.memory_table = {} 
+        # For storing functions
+        self.program_functions = {}
 
+    def start_memory(self, func_dir):
+        for func_name in func_dir:
+            func = func_dir[func_name]
+            memory_dict = {}
+            vars = func.vars
+            params = {}
+            func_params = func.params
+            for var in vars.values():
+                memory_dict[var.address] = Memory(var.address, get_default(var.type))
+            for par in func_params:
+                params[par.address] = Memory(par.address, get_default(par.type))
+            self.program_functions[func_name] = FunctionMemory(func_name, memory_dict, params)     
+            if func_name == "0":
+                self.func_call_stack.append(FunctionMemory(func_name, memory_dict, params))
+
+    def new_function_memory(self, func_id):
+        temp_func = self.program_functions[func_id]
+        temp_memory = temp_func.temp_memory.copy()
+        temp_params = temp_func.params.copy()
+        copy_mem = {}
+        copy_params = {}
+        for var in temp_memory.values():
+            copy_mem[var.address] = Memory(var.address, var.value)
+        for par in temp_params.values():
+            copy_params[par.address] = Memory(par.address, par.value)
+
+        func_mem = FunctionMemory(temp_func.function_name, temp_memory, copy_params)
+        return func_mem
+    
     def get_new_global(self, t_type: str, increment: int = 1) -> int:
         if(t_type == "I"):
             current_next = self.global_int_count
