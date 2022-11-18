@@ -654,7 +654,7 @@ class ParserTudi(object):
     def p_id_exp(self, p):
         '''id_exp : ID check_id
                   | ID check_id '[' seen_fact_open god_exp ']' seen_dim1 seen_fact_close
-                  | ID check_id '[' seen_fact_open god_exp seen_dim2_1 seen_fact_close ',' seen_fact_open god_exp ']' seen_dim2_2 seen_fact_close '''
+                  | ID check_id '[' seen_fact_open god_exp seen_fact_close seen_dim2_1 ',' seen_fact_open god_exp ']' seen_fact_close  seen_dim2_2 '''
         if len(p) > 3:
             t_type, operand = self.quadruple_gen.pop_operand()
             p[0] = [operand, t_type]
@@ -676,12 +676,12 @@ class ParserTudi(object):
         # Checar si la variable es un arreglo de una dimensión
         var = p[-5]
         if len(var["dims"]) != 1:
-            raise Exception(f'Error: Variable \'{var["name"]}\' at line {p.lineno(-5)} is not an array')
+            raise Exception(f'Error: Variable \'{var["name"]}\' is not an array')
 
         # Checar que el operando es de tipo entero
         t_type, operand = self.quadruple_gen.pop_operand()
         if t_type != 'I':
-            raise Exception(f'Error: Index at line {p.lineno(-5)} must be an integer')
+            raise Exception(f'Error: Index of {var["name"]} must be an integer')
 
         # Agrega quad VER para verificar en ejecución que
         # el operando esté dentro de los límites [0, var[dims][0][0])
@@ -697,26 +697,51 @@ class ParserTudi(object):
     def p_seen_dim2_1(self, p):
         '''seen_dim2_1 : '''
         # Checar si la variable es un arreglo de dos dimensiones
-        var = p[-4]
+        var = p[-5]
         if len(var["dims"]) != 2:
-            raise Exception(f'Error: Variable \'{var["name"]}\' at line {p.lineno(-4)} is not matrix')
+            raise Exception(f'Error: Variable \'{var["name"]}\' is not a matrix')
 
         # Checar que el operando es de tipo entero
         t_type, operand = self.quadruple_gen.pop_operand()
         if t_type != 'I':
-            raise Exception(f'Error: Index at line {p.lineno(-5)} must be an integer')
+            raise Exception(f'Error: Index of {var["name"]} must be an integer')
 
         # Agrega quad VER para verificar en ejecución que
         # el operando esté dentro de los límites [0, var[dims][0][0])
         self.quadruple_gen.add_quad_from_parser('VER', operand, None, var["dims"][0][0])
 
+        # Multiplica el operando * m1
+        temp_int = self.virtual_mem.get_new_temporal('I')
+        self.quadruple_gen.add_quad_from_parser('*', operand, var["dims"][0][1], temp_int)
+        self.quadruple_gen.add_operand('I', temp_int)
+
     def p_seen_dim2_2(self, p):
         '''seen_dim2_2 : '''
+        # Checar si la variable es un arreglo de dos dimensiones
+        var = p[-11]
 
         # Checar que el operando es de tipo entero
         t_type, operand = self.quadruple_gen.pop_operand()
         if t_type != 'I':
-            raise Exception(f'Error: Index at line {p.lineno(-5)} must be an integer')
+            raise Exception(f'Error: Index of {var["name"]} must be an integer')
+
+        # Agrega quad VER para verificar en ejecución que
+        # el operando esté dentro de los límites [0, var[dims][1][0])
+        self.quadruple_gen.add_quad_from_parser('VER', operand, None, var["dims"][1][0])
+
+        # Suma el operando y k
+        t_type_sm, operand_sm = self.quadruple_gen.pop_operand()
+        if t_type_sm != 'I':
+            raise Exception(f'Error: Index of {var["name"]} must be an integer')
+
+        temp_int = self.virtual_mem.get_new_temporal('I')
+        self.quadruple_gen.add_quad_from_parser('+', operand_sm, operand, temp_int)
+
+        # Suma el operando a la dirección base y lo guarda en un temporal pointer
+        temp_pointer = self.virtual_mem.get_new_temporal('P')
+        dirBase = self.virtual_mem.get_constant_address(var["address"], 'I')
+        self.quadruple_gen.add_operand(type_to_char[var["type"]], temp_pointer)
+        self.quadruple_gen.add_quad_from_parser('+', temp_int, dirBase, temp_pointer)
 
     def p_seen_dec_func(self, p):
         '''seen_dec_func :'''
