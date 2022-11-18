@@ -114,8 +114,8 @@ class ParserTudi(object):
         # el tipo de retorno. Este es usado para detectar en ejecución, que si se llega
         # a un quad así esta función no regreso nada y marcar error.
         return_type = None
-        if isinstance(func_type, list):
-            return_type = p[-1][0]
+        if isinstance(p[4], list):
+            return_type = p[4][0]
         self.quadruple_gen.add_quad_from_parser("ENDFUNC", None, None, return_type)
         self.func_dir.add_resources(p[2], self.virtual_mem.get_temps_and_locals())
         self.func_dir.clear_var_table(p[2])
