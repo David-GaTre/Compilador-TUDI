@@ -96,6 +96,7 @@ class VirtualMemory():
                     params[par[2]] = Memory(par[2], get_default(type_to_char[par[0]]))
             self.program_functions[func_name] = FunctionMemory(func_name, memory_dict, params)     
             if func_name == "0":
+                self.constant_table = {v.address: v for k, v in self.constant_table.items()}
                 self.func_call_stack.append(FunctionMemory(func_name, memory_dict, params))        
 
     def new_function_memory(self, func_id):
@@ -252,6 +253,7 @@ class VirtualMemory():
         address = self.get_new_constant(t_type, increment)
         new_v = Memory(address, val)
         self.constant_table[str(val)] = new_v
+        self.memory_table[str(val)] = new_v
         return address
 
 call_stack = deque()
