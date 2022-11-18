@@ -1,9 +1,9 @@
-from memory import GLOBAL_START, LOCAL_START, TEMP_START, CONST_START, CONST_LIMIT, VirtualMemory, Memory, FunctionMemory
+from memory import GLOBAL_START, LOCAL_START, TEMP_START, CONST_START, CONST_LIMIT, Memory, FunctionMemory
 from collections import deque
 
 class VirtualMachine():
-    def __init__(self, func_dir, quadruples) -> None:
-        self.virtual_memory = VirtualMemory()
+    def __init__(self, func_dir, quadruples, v_mem) -> None:
+        self.virtual_memory = v_mem
         self.virtual_memory.start_memory(func_dir)
         self.quadruples = quadruples
         self.counter = 0
@@ -66,19 +66,26 @@ class VirtualMachine():
         elif quadruple.operator == 'Print':
             print(self.get_address_value(quadruple.temp).value)
         elif quadruple.operator == 'GOTO':
-            cont = quadruple.temp - 1 # Go to this quad
+            self.counter = quadruple.temp - 1 # Go to this quad
         elif quadruple.operator == 'GOTO_F':
             if not self.get_address_value(quadruple.left_operand).value:
-                cont = quadruple.temp - 1 # Go to this quad
+                self.counter = quadruple.temp - 1 # Go to this quad
         elif quadruple.operator == 'GOTO_V':
             if not self.get_address_value(quadruple.left_operand).value:
-                cont = quadruple.temp - 1 # Go to this quad
+                self.counter = quadruple.temp - 1 # Go to this quad
+        elif quadruple.operator == 'GOSUB':
+            self.programFuncs.append(self.func_call_stack.call_stack[-1])
+            self.curr_func = self.func_call_stack.call_stack[-1]
+        elif quadruple.operator == 'ERA':
+            new_func = self.virtual_memory.create_func_memory(quadruple.left_operand)
+            self.func_call_stack.call_stack.append(new_func)          
         else:
             print("Not yet handled")
 
     def get_address_value(self, address):
+        import pdb; pdb.set_trace()
         if address >= CONST_START:
-            return self.virtual_memory.memory_table[address]
+            return self.virtual_memory.constant_table[address].value
         # Locals and temps
         elif address >= LOCAL_START and address < CONST_START:
             temp_memory = self.programFuncs[-1].temp_memory
