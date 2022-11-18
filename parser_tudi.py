@@ -128,7 +128,7 @@ class ParserTudi(object):
         '''func_start : FUNC START ':' VOID seen_dec_func '(' ')' '{' block_vars_code '}' '''
         self.quadruple_gen.add_quad_from_parser("ENDFUNC", None, None, None)
         self.func_dir.add_resources(p[2], self.virtual_mem.get_temps_and_locals())
-        # self.func_dir.clear_var_table(p[2])
+        self.func_dir.clear_var_table(p[2])
         self.virtual_mem.reset_temps_and_locals()
 
     # Definición de función Update de TUDI:
