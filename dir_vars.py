@@ -1,14 +1,14 @@
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 
 class VariablesTable:
     def __init__(self):
         self.table = {}
 
-    def add_variable(self, name: str, var_type: str, mem: int) -> bool:
+    def add_variable(self, name: str, var_type: str, mem: int, dims: List[Tuple]) -> bool:
         if name in self.table:
             return False
 
-        self.table[name] = {'type': var_type, 'address': mem}
+        self.table[name] = {'type': var_type, 'address': mem, 'dims': dims}
         return True
 
     def get_variable(self, name: str) -> Tuple[bool, Dict]:
@@ -44,28 +44,28 @@ class FunctionsDirectory:
         self.directory[func_name]['return_address'] = return_address
         return True
 
-    def add_resources(self, func_name: str, resources: dict) -> bool:
+    def add_resources(self, func_name: str, resources: Dict) -> bool:
         if func_name not in self.directory:
             return False
 
         self.directory[func_name]['resources'] = resources
         return True
 
-    def add_param(self, func_name: str, var_name: str, var_type: str, mem: int) -> bool:
+    def add_param(self, func_name: str, var_name: str, var_type: str, mem: int, dims: List[Tuple]) -> bool:
         if func_name not in self.directory:
             return False
         
-        if not self.add_variable(func_name, var_name, var_type, mem):
+        if not self.add_variable(func_name, var_name, var_type, mem, dims):
             return False
 
-        self.directory[func_name]['params'].append((var_type, var_name, mem))
+        self.directory[func_name]['params'].append((var_type, var_name, mem, dims))
         return True
 
-    def add_variable(self, func_name: str, var_name: str, var_type: str, mem: int) -> bool:
+    def add_variable(self, func_name: str, var_name: str, var_type: str, mem: int, dims: List[Tuple]) -> bool:
         if func_name not in self.directory:
             return False
 
-        return self.directory[func_name]['table'].add_variable(var_name, var_type, mem)
+        return self.directory[func_name]['table'].add_variable(var_name, var_type, mem, dims)
 
     def set_variable(self, func_name: str, var_name: str, value, mem: int) -> bool:
         if func_name not in self.directory:
@@ -92,3 +92,7 @@ class FunctionsDirectory:
             return {}
 
         return self.directory[func_name]
+
+    def clear_var_table(self, func_name: str):
+        if func_name in self.directory:
+            self.directory[func_name]['table'] = VariablesTable()
