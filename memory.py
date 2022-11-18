@@ -110,7 +110,7 @@ class VirtualMemory():
         for par in temp_params.values():
             copy_params[par.address] = Memory(par.address, par.value)
 
-        func_mem = FunctionMemory(temp_func.function_name, temp_memory, copy_params)
+        func_mem = FunctionMemory(temp_func.func_name, temp_memory, copy_params)
         return func_mem
     
     def get_new_global(self, t_type: str, increment: int = 1) -> int:

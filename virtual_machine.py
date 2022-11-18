@@ -12,6 +12,7 @@ class VirtualMachine():
 
     def start_machine(self):
         while self.counter < len(self.quadruples):
+            print(self.counter)
             self.do_action(self.quadruples[self.counter])
             self.counter += 1 # Going to next quadruple
     
@@ -66,24 +67,33 @@ class VirtualMachine():
         elif quadruple.operator == 'Print':
             print(self.get_address_value(quadruple.temp).value)
         elif quadruple.operator == 'GOTO':
-            self.counter = quadruple.temp - 1 # Go to this quad
+            self.counter = quadruple.temp - 2 # Go to this quad
         elif quadruple.operator == 'GOTO_F':
             if not self.get_address_value(quadruple.left_operand).value:
-                self.counter = quadruple.temp - 1 # Go to this quad
+                self.counter = quadruple.temp - 2 # Go to this quad
         elif quadruple.operator == 'GOTO_V':
             if not self.get_address_value(quadruple.left_operand).value:
-                self.counter = quadruple.temp - 1 # Go to this quad
+                self.counter = quadruple.temp - 2 # Go to this quad
         elif quadruple.operator == 'GOSUB':
-            self.programFuncs.append(self.func_call_stack.call_stack[-1])
-            self.curr_func = self.func_call_stack.call_stack[-1]
+            self.programFuncs.append(self.virtual_memory.func_call_stack[-1])
+            self.curr_func = self.virtual_memory.func_call_stack[-1]
+            import pdb; pdb.set_trace()
+        elif quadruple.operator == 'ENDFUNC':
+        # It checks if the function is not run and start so that the cont does not reset.
+            if self.programFuncs:
+                self.programFuncs.pop()
+            self.curr_func = self.virtual_memory.func_call_stack[-1] #-1 -> top()
+            
+            if self.curr_func.func_name not in ["Start", "Update"]:
+                self.counter = self.curr_func.prev_func
+            self.virtual_memory.func_call_stack.pop()
         elif quadruple.operator == 'ERA':
-            new_func = self.virtual_memory.create_func_memory(quadruple.left_operand)
-            self.func_call_stack.call_stack.append(new_func)          
+            new_func = self.virtual_memory.new_function_memory(quadruple.temp)
+            self.virtual_memory.func_call_stack.append(new_func)          
         else:
             print("Not yet handled")
 
     def get_address_value(self, address):
-        import pdb; pdb.set_trace()
         if address >= CONST_START:
             return self.virtual_memory.constant_table[address].value
         # Locals and temps
