@@ -92,3 +92,7 @@ class FunctionsDirectory:
             return {}
 
         return self.directory[func_name]
+
+    def clear_var_table(self, func_name: str):
+        if func_name in self.directory:
+            self.directory[func_name]['table'] = VariablesTable()
