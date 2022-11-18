@@ -114,7 +114,7 @@ class ParserTudi(object):
         # el tipo de retorno. Este es usado para detectar en ejecución, que si se llega
         # a un quad así esta función no regreso nada y marcar error.
         return_type = None
-        if isinstance(p[4], list):
+        if isinstance(p[4], list) and p[4][0] != 'void':
             return_type = p[4][0]
         self.quadruple_gen.add_quad_from_parser("ENDFUNC", None, None, return_type)
         self.func_dir.add_resources(p[2], self.virtual_mem.get_temps_and_locals())
@@ -128,7 +128,7 @@ class ParserTudi(object):
         '''func_start : FUNC START ':' VOID seen_dec_func '(' ')' '{' block_vars_code '}' '''
         self.quadruple_gen.add_quad_from_parser("ENDFUNC", None, None, None)
         self.func_dir.add_resources(p[2], self.virtual_mem.get_temps_and_locals())
-        self.func_dir.clear_var_table(p[2])
+        # self.func_dir.clear_var_table(p[2])
         self.virtual_mem.reset_temps_and_locals()
 
     # Definición de función Update de TUDI:
@@ -652,23 +652,71 @@ class ParserTudi(object):
     # - Variable
     # - Elemento de un arreglo de 1 o 2 dimensiones
     def p_id_exp(self, p):
-        '''id_exp : ID
-                  | ID '[' seen_fact_open god_exp seen_god_exp ']' seen_fact_close
-                  | ID '[' seen_fact_open god_exp seen_god_exp seen_fact_close ',' seen_fact_open god_exp seen_god_exp ']' seen_fact_close '''
-        if len(p) == 13:
-            p[0] = Token([p[1], p[4], p[9]], p.lineno(1))
-        elif len(p) == 8:
-            p[0] = Token([p[1], p[4]], p.lineno(1))
+        '''id_exp : ID check_id
+                  | ID check_id '[' seen_fact_open god_exp ']' seen_dim1 seen_fact_close
+                  | ID check_id '[' seen_fact_open god_exp seen_dim2_1 seen_fact_close ',' seen_fact_open god_exp ']' seen_dim2_2 seen_fact_close '''
+        if len(p) > 3:
+            t_type, operand = self.quadruple_gen.pop_operand()
+            p[0] = [operand, t_type]
         else:
-            p[0] = Token([p[1]], p.lineno(1))
+            var= p[2]
+            p[0] = [var['address'], type_to_char[var["type"]]]
 
+    def p_check_id(self, p):
+        '''check_id : '''
         # Checa si la variable fue declarada con anterioridad
-        if not self.func_dir.find_variable(self.last_vars['scope'], p[1]):
-            print(f'Error: Variable \'{p[1]}\' at line {p.lineno(1)} was not declared.')
-            raise Exception(f'Error: Variable \'{p[1]}\' at line {p.lineno(1)} was not declared.')
+        if not self.func_dir.find_variable(self.last_vars['scope'], p[-1]):
+            print(f'Error: Variable \'{p[-1]}\' at line {p.lineno(-1)} was not declared.')
+            raise Exception(f'Error: Variable \'{p[-1]}\' at line {p.lineno(-1)} was not declared.')
 
-        var = {"name": p[1]} | self.func_dir.find_variable(self.last_vars['scope'], p[1])
-        p[0] = [var['address'], type_to_char[var["type"]]]
+        p[0] = {"name": p[-1]} | self.func_dir.find_variable(self.last_vars['scope'], p[-1])
+
+    def p_seen_dim1(self, p):
+        '''seen_dim1 : '''
+        # Checar si la variable es un arreglo de una dimensión
+        var = p[-5]
+        if len(var["dims"]) != 1:
+            raise Exception(f'Error: Variable \'{var["name"]}\' at line {p.lineno(-5)} is not an array')
+
+        # Checar que el operando es de tipo entero
+        t_type, operand = self.quadruple_gen.pop_operand()
+        if t_type != 'I':
+            raise Exception(f'Error: Index at line {p.lineno(-5)} must be an integer')
+
+        # Agrega quad VER para verificar en ejecución que
+        # el operando esté dentro de los límites [0, var[dims][0][0])
+        self.quadruple_gen.add_quad_from_parser('VER', operand, None, var["dims"][0][0])
+
+        # Suma el operando a la dirección base y lo guarda en un temporal pointer
+        temp_pointer = self.virtual_mem.get_new_temporal('P')
+        dirBase = self.virtual_mem.get_constant_address(var["address"], 'I')
+        self.quadruple_gen.add_operand(type_to_char[var["type"]], temp_pointer)
+        self.quadruple_gen.add_quad_from_parser('+', operand, dirBase, temp_pointer)
+
+    
+    def p_seen_dim2_1(self, p):
+        '''seen_dim2_1 : '''
+        # Checar si la variable es un arreglo de dos dimensiones
+        var = p[-4]
+        if len(var["dims"]) != 2:
+            raise Exception(f'Error: Variable \'{var["name"]}\' at line {p.lineno(-4)} is not matrix')
+
+        # Checar que el operando es de tipo entero
+        t_type, operand = self.quadruple_gen.pop_operand()
+        if t_type != 'I':
+            raise Exception(f'Error: Index at line {p.lineno(-5)} must be an integer')
+
+        # Agrega quad VER para verificar en ejecución que
+        # el operando esté dentro de los límites [0, var[dims][0][0])
+        self.quadruple_gen.add_quad_from_parser('VER', operand, None, var["dims"][0][0])
+
+    def p_seen_dim2_2(self, p):
+        '''seen_dim2_2 : '''
+
+        # Checar que el operando es de tipo entero
+        t_type, operand = self.quadruple_gen.pop_operand()
+        if t_type != 'I':
+            raise Exception(f'Error: Index at line {p.lineno(-5)} must be an integer')
 
     def p_seen_dec_func(self, p):
         '''seen_dec_func :'''

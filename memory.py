@@ -15,6 +15,7 @@ TEMP_INT, TEMP_INT_LIMIT = 40000, 40000
 TEMP_FLOAT, TEMP_FLOAT_LIMIT = 44000, 44000
 TEMP_BOOL, TEMP_BOOL_LIMIT = 48000, 48000
 TEMP_CHAR, TEMP_CHAR_LIMIT = 52000, 52000
+TEMP_POINTER, TEMP_POINTER_LIMIT = 56000, 56000
 
 CONST_INT, CONST_INT_LIMIT = 60000, 60000
 CONST_FLOAT, CONST_FLOAT_LIMIT = 64000, 64000
@@ -55,6 +56,7 @@ class VirtualMemory():
         self.temp_float_count = TEMP_FLOAT
         self.temp_bool_count = TEMP_BOOL
         self.temp_char_count = TEMP_CHAR
+        self.temp_pointer_count = TEMP_POINTER
         # Constantes
         self.const_int_count = CONST_INT
         self.const_float_count = CONST_FLOAT
@@ -136,9 +138,15 @@ class VirtualMemory():
             return current_next
         elif (t_type == "C"):
             current_next = self.temp_char_count
-            if (current_next + increment) > CONST_START:
+            if (current_next + increment) > TEMP_POINTER_LIMIT:
                 raise Exception("ERROR: TEMPORAL CHAR MEMORY EXCEEDED")
             self.temp_char_count += increment
+            return current_next
+        elif (t_type == "P"):
+            current_next = self.temp_pointer_count
+            if (current_next + increment) > CONST_START:
+                raise Exception("ERROR: TEMPORAL POINTER MEMORY EXCEEDED")
+            self.temp_pointer_count += increment
             return current_next
 
     def get_new_constant(self, t_type: str, increment: int = 1) -> int:
@@ -180,6 +188,7 @@ class VirtualMemory():
             'TF': self.temp_float_count - TEMP_FLOAT,
             'TB': self.temp_bool_count - TEMP_BOOL,
             'TC': self.temp_char_count - TEMP_CHAR,
+            'TP': self.temp_pointer_count - TEMP_POINTER,
         }
         return count
 
@@ -195,6 +204,7 @@ class VirtualMemory():
         self.temp_float_count = TEMP_FLOAT
         self.temp_bool_count = TEMP_BOOL
         self.temp_char_count = TEMP_CHAR
+        self.temp_pointer_count = TEMP_POINTER
 
     # Usar para tabla de tabla de constantes en un diccionario
     def get_constant_address(self, val: str, t_type: str, increment: int = 1) -> int:
