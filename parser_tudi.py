@@ -3,6 +3,7 @@ from dir_vars import FunctionsDirectory
 from sem_cube import SemanticCube
 from quadruples import QuadrupleGenerator, type_to_char, char_to_type
 from memory import VirtualMemory
+from virtual_machine import VirtualMachine
 
 import ply.yacc as yacc
 
@@ -43,6 +44,9 @@ class ParserTudi(object):
         print()
 
         self.quadruple_gen.print_quadruples()
+
+        virtual_machine = VirtualMachine(self.func_dir, self.quadruple_gen.quadruples)
+        virtual_machine.start_machine() # Where the execution begins
 
     # Declaración de variables globales (opcional)
     def p_game_vars(self, p):
