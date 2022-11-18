@@ -12,7 +12,7 @@ class VirtualMachine():
 
     def start_machine(self):
         while self.counter < len(self.quadruples):
-            print(self.counter)
+            print(self.counter + 1)
             self.do_action(self.quadruples[self.counter])
             self.counter += 1 # Going to next quadruple
     
@@ -77,15 +77,13 @@ class VirtualMachine():
         elif quadruple.operator == 'GOSUB':
             self.programFuncs.append(self.virtual_memory.func_call_stack[-1])
             self.curr_func = self.virtual_memory.func_call_stack[-1]
-            import pdb; pdb.set_trace()
+            self.curr_func.prev_func = self.counter
+            self.counter = self.curr_func.start-2
         elif quadruple.operator == 'ENDFUNC':
-        # It checks if the function is not run and start so that the cont does not reset.
             if self.programFuncs:
                 self.programFuncs.pop()
-            self.curr_func = self.virtual_memory.func_call_stack[-1] #-1 -> top()
-            
-            if self.curr_func.func_name not in ["Start", "Update"]:
-                self.counter = self.curr_func.prev_func
+            self.curr_func = self.virtual_memory.func_call_stack[-1]
+            self.counter = self.curr_func.prev_func
             self.virtual_memory.func_call_stack.pop()
         elif quadruple.operator == 'ERA':
             new_func = self.virtual_memory.new_function_memory(quadruple.temp)
@@ -95,7 +93,7 @@ class VirtualMachine():
 
     def get_address_value(self, address):
         if address >= CONST_START:
-            return self.virtual_memory.constant_table[address].value
+            return self.virtual_memory.constant_table[address]
         # Locals and temps
         elif address >= LOCAL_START and address < CONST_START:
             temp_memory = self.programFuncs[-1].temp_memory

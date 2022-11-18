@@ -42,11 +42,12 @@ class Memory():
         return f'Address: {self.address}, Value: {self.value}\n'
 
 class FunctionMemory():
-    def __init__(self, func_name='0', temp_memory={}, params={}):
+    def __init__(self, func_name='0', temp_memory={}, params={}, start=-1):
         self.func_name = func_name
         self.prev_func = 0
         self.temp_memory = temp_memory.copy() # Due to mutable nature
         self.params = params.copy() # Due to mutable nature
+        self.start = start
     def __str__(self):
         return f'Func Name: {self.func_name}, Memory: {self.temp_memory}, Params: {self.params}\n'
     def __repr__(self):
@@ -96,23 +97,25 @@ class VirtualMemory():
                 for par in func_params:
                     # sample of par: ('int', 'p', 20000)
                     params[par[2]] = Memory(par[2], get_default(type_to_char[par[0]]))
-            self.program_functions[func_name] = FunctionMemory(func_name, memory_dict, params)     
             if func_name == "0":
                 self.constant_table = {v.address: v for k, v in self.constant_table.items()}
-                self.func_call_stack.append(FunctionMemory(func_name, memory_dict, params))        
+                self.func_call_stack.append(FunctionMemory(func_name, memory_dict, params))
+            else:
+                self.program_functions[func_name] = FunctionMemory(func_name, memory_dict, params, func['start'])     
+        
 
     def new_function_memory(self, func_id):
         temp_func = self.program_functions[func_id]
         temp_memory = temp_func.temp_memory.copy()
         temp_params = temp_func.params.copy()
-        copy_mem = {}
-        copy_params = {}
+        mem = {}
+        params = {}
         for var in temp_memory.values():
-            copy_mem[var.address] = Memory(var.address, var.value)
+            mem[var.address] = Memory(var.address, var.value)
         for par in temp_params.values():
-            copy_params[par.address] = Memory(par.address, par.value)
+            params[par.address] = Memory(par.address, par.value)
 
-        func_mem = FunctionMemory(temp_func.func_name, temp_memory, copy_params)
+        func_mem = FunctionMemory(temp_func.func_name, mem, params, temp_func.start)
         return func_mem
     
     def get_new_global(self, t_type: str, increment: int = 1) -> int:
