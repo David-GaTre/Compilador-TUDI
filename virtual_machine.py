@@ -80,6 +80,7 @@ class VirtualMachine():
             self.curr_func.prev_func = self.counter
             self.counter = self.curr_func.start-2
         elif quadruple.operator == 'ENDFUNC':
+            import pdb; pdb.set_trace()
             if self.programFuncs:
                 self.programFuncs.pop()
             self.curr_func = self.virtual_memory.func_call_stack[-1]
@@ -100,18 +101,18 @@ class VirtualMachine():
             return temp_memory[address]
         elif address >= GLOBAL_START and address < LOCAL_START:
             value = None
-            for p in self.virtual_memory.call_stack:
+            for p in self.virtual_memory.func_call_stack:
                 if p.func_name == "0":
                     return p.temp_memory[address]
             return value
         
     def set_global_var(self, address,value):
-        for p in self.virtual_memory.call_stack:
+        for p in self.virtual_memory.func_call_stack:
             if p.func_name == "0":
                 p.temp_memory[address] = Memory(address, value)
 
     def get_global_var(self, address):
-        for p in self.virtual_memory.call_stack:
+        for p in self.virtual_memory.func_call_stack:
             if p.func_name == "0":
                 return p.temp_memory[address]
     
