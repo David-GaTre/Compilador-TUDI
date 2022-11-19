@@ -72,7 +72,7 @@ class VirtualMachine():
             if not self.get_address_value(quadruple.left_operand).value:
                 self.counter = quadruple.temp - 2 # Go to this quad
         elif quadruple.operator == 'GOTO_V':
-            if not self.get_address_value(quadruple.left_operand).value:
+            if self.get_address_value(quadruple.left_operand).value:
                 self.counter = quadruple.temp - 2 # Go to this quad
         elif quadruple.operator == 'GOSUB':
             self.programFuncs.append(self.virtual_memory.func_call_stack[-1])
@@ -80,7 +80,6 @@ class VirtualMachine():
             self.curr_func.prev_func = self.counter
             self.counter = self.curr_func.start-2
         elif quadruple.operator == 'ENDFUNC':
-            import pdb; pdb.set_trace()
             if self.programFuncs:
                 self.programFuncs.pop()
             self.curr_func = self.virtual_memory.func_call_stack[-1]
