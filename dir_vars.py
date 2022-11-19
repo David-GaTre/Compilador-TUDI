@@ -96,3 +96,6 @@ class FunctionsDirectory:
     def clear_var_table(self, func_name: str):
         if func_name in self.directory:
             self.directory[func_name]['table'] = VariablesTable()
+
+    def get_global_mem(self):
+        return {v["address"]: None for k, v in self.directory[self.GLOBAL_ENV]['table'].table.items()}
