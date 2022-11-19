@@ -34,7 +34,7 @@ class FunctionsDirectory:
         if func_name in self.directory:
             return False
 
-        self.directory[func_name] = {'start': start, 'return_type': return_type, 'params': [], 'table': VariablesTable()}
+        self.directory[func_name] = {'start': start, 'return_type': return_type, 'params': [], 'table': VariablesTable(), 'return_address': None}
         return True
 
     def add_return_address(self, func_name: str, return_address: int) -> bool:
