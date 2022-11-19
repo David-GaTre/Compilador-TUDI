@@ -1,4 +1,4 @@
-from collections import deque 
+from quadruples import type_to_char, char_to_type
 
 # NUMERIC CONSTANTS FOR MEMORY ADDRESSING
 GLOBAL_INT, GLOBAL_INT_LIMIT= 0,0
@@ -39,6 +39,55 @@ class Memory():
     def __repr__(self):
         return f'Address: {self.address}, Value: {self.value}\n'
 
+class FunctionMemory():
+    def __init__(self, resources, params_sequence, start, return_address):
+        self.memory_map = self._create_memory_map(resources)
+        self.params_sequence = params_sequence
+        self.start = start
+        self.return_address = return_address
+
+    def _create_memory_map(self, resources):
+        memory_map = dict()
+        for resource, number in resources.items():
+            if number > 0:
+                # Manejar None como sin inicializar
+                memory_map[resource] = [None] * number
+                # Manejar valores default
+                # memory_map[resource] = [get_default(resource[1])] * number
+
+        return memory_map
+
+    def get_value_by_address(self, address):
+        addr_type, pos = self._get_type_pos_by_address(address)
+        return self.memory_map[addr_type][pos]
+
+    def set_value_by_address(self, address, value):
+        addr_type, pos = self._get_type_pos_by_address(address)
+        self.memory_map[addr_type][pos] = value
+
+    def _get_type_pos_by_address(self, address):
+        if LOCAL_INT <= address and address < LOCAL_FLOAT:
+            return 'LI', address - LOCAL_INT
+        elif LOCAL_FLOAT <= address and address < LOCAL_BOOL:
+            return 'LF', address - LOCAL_FLOAT
+        elif LOCAL_BOOL <= address and address < LOCAL_CHAR:
+            return 'LB', address - LOCAL_BOOL
+        elif LOCAL_CHAR <= address and address < TEMP_INT:
+            return 'LC', address - LOCAL_CHAR
+        elif TEMP_INT <= address and address < TEMP_FLOAT:
+            return 'TI', address - TEMP_INT
+        elif TEMP_FLOAT <= address and address < TEMP_BOOL:
+            return 'TF', address - TEMP_FLOAT
+        elif TEMP_BOOL <= address and address < TEMP_CHAR:
+            return 'TB', address - TEMP_BOOL
+        elif TEMP_CHAR <= address and address < TEMP_POINTER:
+            return 'TC', address - TEMP_CHAR
+        elif TEMP_POINTER <= address and address < CONST_INT:
+            return 'TP', address - TEMP_POINTER
+        else:
+            raise Exception("Error: Address does not belong to any type")
+
+
 class VirtualMemory():
     def __init__(self):
         # Globales
@@ -63,8 +112,8 @@ class VirtualMemory():
         self.const_bool_count = CONST_BOOL
         self.const_char_count = CONST_CHAR
         # Constant Table
-        self.constant_table= {}
-
+        self.constant_table = {} 
+    
     def get_new_global(self, t_type: str, increment: int = 1) -> int:
         if(t_type == "I"):
             current_next = self.global_int_count
@@ -214,8 +263,6 @@ class VirtualMemory():
         new_v = Memory(address, val)
         self.constant_table[str(val)] = new_v
         return address
-
-call_stack = deque()
 
 def get_default(token):
     if token == 'I':

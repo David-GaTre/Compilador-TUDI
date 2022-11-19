@@ -24,6 +24,11 @@ class ParserTudi(object):
     # - Definición de funciones
     def p_game(self, p):
         '''game : GAME ID ';' CANVAS ASSIGN_OP int ',' int ';' game_vars game_funcs'''
+        self.quadruple_gen.quadruples[0].temp = len(self.quadruple_gen.quadruples)+1
+        self.quadruple_gen.add_quad_from_parser("ERA", None, None, 'Start')
+        self.quadruple_gen.add_quad_from_parser("GOSUB", None, None, 'Start')
+        self.quadruple_gen.add_quad_from_parser("ERA", None, None, 'Update')
+        self.quadruple_gen.add_quad_from_parser("GOSUB", None, None, 'Update')
         p[0] = "Aceptado"
         print("Todo valido")
 
@@ -48,6 +53,7 @@ class ParserTudi(object):
     def p_game_vars(self, p):
         '''game_vars : block_vars
                      | empty'''
+        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, None)
 
     # Definición de funciones:
     # - Funciones definidas por el usuario (opcionales)
@@ -803,3 +809,12 @@ class ParserTudi(object):
     # Parse input data
     def parse(self, data):
         return self.parser.parse(data)
+
+    def get_quadruples(self):
+        return self.quadruple_gen.quadruples
+
+    def get_function_directory(self):
+        return self.func_dir
+
+    def get_constant_table(self):
+        return {v.address: v.value for k, v in self.virtual_mem.constant_table.items()}
