@@ -167,8 +167,31 @@ class VirtualMachine():
             # --------------------------- ERA ---------------------------
             # Agregamos al call stack
             func = self.func_dir.find_function(quadruple.temp)
-            new_func = FunctionMemory(func["resources"], func["params"], func["start"])
+            new_func = FunctionMemory(func["resources"], func["params"], func["start"], func["return_address"])
             self.func_call_stack.append(new_func)
+        elif quadruple.operator == 'PARAM':
+            # --------------------------- PARAM ---------------------------
+            # Obtenemos el número de parámetro - 1
+            param_idx = int(quadruple.temp[3:]) - 1
+            address = self.func_call_stack[-1].params_sequence[param_idx][2]
+
+            left_operand = self.get_address_value(quadruple.left_operand)
+            self.func_call_stack[-1].set_value_by_address(address, left_operand)
+            print('Param', param_idx, '=', left_operand)
+        elif quadruple.operator == 'RET':
+            # --------------------------- RETURN ---------------------------
+            # Obtenemos el número de parámetro - 1
+            return_address = self.curr_func.return_address
+            return_value = self.get_address_value(quadruple.temp)
+            self.set_address_value(return_address, return_value)
+
+            self.func_call_stack.pop()
+            if len(self.func_call_stack) > 0:
+                self.curr_func = self.func_call_stack[-1]
+            else:
+                self.curr_func = None
+            self.counter = self.goto_stack.pop()
+            print('return_address:', return_address, 'return_value:', return_value)
         else:
             print("Not yet handled")
 

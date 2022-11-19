@@ -40,10 +40,11 @@ class Memory():
         return f'Address: {self.address}, Value: {self.value}\n'
 
 class FunctionMemory():
-    def __init__(self, resources, params_sequence, start):
+    def __init__(self, resources, params_sequence, start, return_address):
         self.memory_map = self._create_memory_map(resources)
         self.params_sequence = params_sequence
         self.start = start
+        self.return_address = return_address
 
     def _create_memory_map(self, resources):
         memory_map = dict()
