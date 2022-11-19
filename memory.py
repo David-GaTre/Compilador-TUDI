@@ -1,6 +1,4 @@
-from collections import deque 
 from quadruples import type_to_char, char_to_type
-
 
 # NUMERIC CONSTANTS FOR MEMORY ADDRESSING
 GLOBAL_INT, GLOBAL_INT_LIMIT= 0,0
@@ -42,16 +40,52 @@ class Memory():
         return f'Address: {self.address}, Value: {self.value}\n'
 
 class FunctionMemory():
-    def __init__(self, func_name='0', temp_memory={}, params={}, start=-1):
-        self.func_name = func_name
-        self.prev_func = 0
-        self.temp_memory = temp_memory.copy() # Due to mutable nature
-        self.params = params.copy() # Due to mutable nature
+    def __init__(self, resources, params_sequence, start):
+        self.memory_map = self._create_memory_map(resources)
+        self.params_sequence = params_sequence
         self.start = start
-    def __str__(self):
-        return f'Func Name: {self.func_name}, Memory: {self.temp_memory}, Params: {self.params}\n'
-    def __repr__(self):
-        return f'Func Name: {self.func_name}, Memory: {self.temp_memory}, Params: {self.params}\n'
+
+    def _create_memory_map(self, resources):
+        memory_map = dict()
+        for resource, number in resources.items():
+            if number > 0:
+                # Manejar None como sin inicializar
+                memory_map[resource] = [None] * number
+                # Manejar valores default
+                # memory_map[resource] = [get_default(resource[1])] * number
+
+        return memory_map
+
+    def get_value_by_address(self, address):
+        addr_type, pos = self._get_type_pos_by_address(address)
+        return self.memory_map[addr_type][pos]
+
+    def set_value_by_address(self, address, value):
+        addr_type, pos = self._get_type_pos_by_address(address)
+        self.memory_map[addr_type][pos] = value
+
+    def _get_type_pos_by_address(self, address):
+        if LOCAL_INT <= address and address < LOCAL_FLOAT:
+            return 'LI', address - LOCAL_INT
+        elif LOCAL_FLOAT <= address and address < LOCAL_BOOL:
+            return 'LF', address - LOCAL_FLOAT
+        elif LOCAL_BOOL <= address and address < LOCAL_CHAR:
+            return 'LB', address - LOCAL_BOOL
+        elif LOCAL_CHAR <= address and address < TEMP_INT:
+            return 'LC', address - LOCAL_CHAR
+        elif TEMP_INT <= address and address < TEMP_FLOAT:
+            return 'TI', address - TEMP_INT
+        elif TEMP_FLOAT <= address and address < TEMP_BOOL:
+            return 'TF', address - TEMP_FLOAT
+        elif TEMP_BOOL <= address and address < TEMP_CHAR:
+            return 'TB', address - TEMP_BOOL
+        elif TEMP_CHAR <= address and address < TEMP_POINTER:
+            return 'TC', address - TEMP_CHAR
+        elif TEMP_POINTER <= address and address < CONST_INT:
+            return 'TP', address - TEMP_POINTER
+        else:
+            raise Exception("Error: Address does not belong to any type")
+
 
 class VirtualMemory():
     def __init__(self):
@@ -78,45 +112,6 @@ class VirtualMemory():
         self.const_char_count = CONST_CHAR
         # Constant Table
         self.constant_table = {} 
-        # Stack of function calling
-        self.func_call_stack = deque()
-        # Used for constants in the meantime
-        self.memory_table = {} 
-        # For storing functions
-        self.program_functions = {}
-
-    def start_memory(self, func_dir):
-        for func_name, func in func_dir.directory.items():
-            memory_dict = {}
-            vars = func['table'].table
-            for var in vars.values():
-                memory_dict[var['address']] = Memory(var['address'], get_default(type_to_char[var['type']]))
-            params = {}
-            if func_name != '0':
-                func_params = func['params']
-                for par in func_params:
-                    # sample of par: ('int', 'p', 20000)
-                    params[par[2]] = Memory(par[2], get_default(type_to_char[par[0]]))
-            if func_name == "0":
-                self.constant_table = {v.address: v for k, v in self.constant_table.items()}
-                self.func_call_stack.append(FunctionMemory(func_name, memory_dict, params))
-            else:
-                self.program_functions[func_name] = FunctionMemory(func_name, memory_dict, params, func['start'])     
-        
-
-    def new_function_memory(self, func_id):
-        temp_func = self.program_functions[func_id]
-        temp_memory = temp_func.temp_memory.copy()
-        temp_params = temp_func.params.copy()
-        mem = {}
-        params = {}
-        for var in temp_memory.values():
-            mem[var.address] = Memory(var.address, var.value)
-        for par in temp_params.values():
-            params[par.address] = Memory(par.address, par.value)
-
-        func_mem = FunctionMemory(temp_func.func_name, mem, params, temp_func.start)
-        return func_mem
     
     def get_new_global(self, t_type: str, increment: int = 1) -> int:
         if(t_type == "I"):
@@ -266,10 +261,7 @@ class VirtualMemory():
         address = self.get_new_constant(t_type, increment)
         new_v = Memory(address, val)
         self.constant_table[str(val)] = new_v
-        self.memory_table[str(val)] = new_v
         return address
-
-call_stack = deque()
 
 def get_default(token):
     if token == 'I':
