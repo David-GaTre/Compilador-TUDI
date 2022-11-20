@@ -2,7 +2,7 @@ import argparse
 
 from collections import deque
 from lexer import LexerTudi
-from memory import GLOBAL_START, LOCAL_START, TEMP_START, CONST_START, CONST_LIMIT, Memory, FunctionMemory
+from memory import GLOBAL_START, LOCAL_START, TEMP_START, TEMP_POINTER, CONST_START, CONST_LIMIT, Memory, FunctionMemory
 from parser_tudi import ParserTudi
 
 class VirtualMachine():
@@ -111,6 +111,11 @@ class VirtualMachine():
         elif quadruple.operator == '=':
             # --------------------------- ASSIGNMENT ---------------------------
             temp_val = self.get_address_value(quadruple.left_operand)
+            # Resultado es un pointer, entonces
+            if TEMP_POINTER <= quadruple.temp and quadruple.temp < CONST_START:
+                temp = self.curr_func.get_value_by_address(quadruple.temp)
+                self.set_address_value(temp, temp_val)
+                return
             self.set_address_value(quadruple.temp, temp_val)
         # #elif quadruple.operator == 'Read':
         # #    pass
@@ -178,6 +183,13 @@ class VirtualMachine():
             else:
                 self.curr_func = None
             self.counter = self.goto_stack.pop()
+        elif quadruple.operator == 'VER':
+            # --------------------------- VERIFY BOUNDS ---------------------------
+            index = self.get_address_value(quadruple.left_operand)
+            upper_bound = self.get_address_value(quadruple.temp)
+            # Checa que esté dentro del rango [0, upper_bound)
+            if not (0 <= index and index < upper_bound):
+                raise Exception(f"Index out of bounds")
         else:
             print("Not yet handled")
 
@@ -188,6 +200,9 @@ class VirtualMachine():
         # Constantes
         if CONST_START <= address and address < CONST_LIMIT:
             return self.const_table[address]
+        if TEMP_POINTER <= address and address < CONST_START:
+            temp = self.curr_func.get_value_by_address(address)
+            return self.get_address_value(temp)
         # Locals and temps
         if address >= LOCAL_START and address < CONST_START:
             return self.curr_func.get_value_by_address(address)
