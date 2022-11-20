@@ -130,8 +130,9 @@ class VirtualMachine():
             print(quadruple.temp, '=', self.get_address_value(quadruple.temp))
         # #elif quadruple.operator == 'Read':
         # #    pass
-        # elif quadruple.operator == 'Print':
-        #     print(self.get_address_value(quadruple.temp).value)
+        elif quadruple.operator == 'Print':
+            # --------------------------- PRINT ---------------------------
+            print(self.get_address_value(quadruple.temp))
         elif quadruple.operator == 'GOTO':
             # --------------------------- GOTO ---------------------------
             self.counter = quadruple.temp - 2 # Go to this quad
