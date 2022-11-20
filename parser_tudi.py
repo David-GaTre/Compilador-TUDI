@@ -237,8 +237,8 @@ class ParserTudi(object):
         self.quadruple_gen.add_quad_from_parser(p[1], None, None, output)
 
     def p_read(self, p):
-        '''read : READ '(' ')' '''
-        self.quadruple_gen.add_quad_from_parser(p[1], None, None, None)
+        '''read : READ '(' id_exp ')' '''
+        self.quadruple_gen.add_quad_from_parser(p[1], None, None, p[3][0])
 
     # Funciones built-in de cast en TUDI:
     # - Para los tipos de datos: int, float y bool
