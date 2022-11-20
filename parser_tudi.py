@@ -226,13 +226,16 @@ class ParserTudi(object):
                    | READ  '(' io_func_prima ')' '''
         # TODO: Unfinished. Finish later
         p[0] = p[1]
-        self.quadruple_gen.add_quad_from_parser(p[1], None, None, None)
+        if isinstance(p[3], list):
+            self.quadruple_gen.add_quad_from_parser(p[1], None, None, p[3][0])
+        else:
+            self.quadruple_gen.add_quad_from_parser(p[1], None, None, p[3])
 
     # El argumento posible de una función I/O
     def p_io_func_prima(self, p):
         '''io_func_prima : STRING_LITERAL
-                         | empty'''
-        # TODO: Unfinished. Finish later
+                         | fact_constants'''
+        p[0] = p[1]
 
     # Funciones built-in de cast en TUDI:
     # - Para los tipos de datos: int, float y bool

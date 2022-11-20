@@ -31,10 +31,7 @@ class VirtualMachine():
         self.goto_stack = deque()
 
     def start_machine(self):
-        print("----- START -----")
         while self.counter < len(self.quadruples):
-            print("IP = ", self.counter + 1)
-            print(self.quadruples[self.counter])
             self.do_action(self.quadruples[self.counter])
             self.counter += 1 # Going to next quadruple
     
@@ -45,93 +42,84 @@ class VirtualMachine():
             right_operand = self.get_address_value(quadruple.right_operand)
             temp_val = left_operand + right_operand
             self.set_address_value(quadruple.temp, temp_val)
-            print(left_operand, '+', right_operand, '=', temp_val)
         elif quadruple.operator == '-':
             # --------------------------- RESTA ---------------------------
             left_operand = self.get_address_value(quadruple.left_operand)
             right_operand = self.get_address_value(quadruple.right_operand)
             temp_val = left_operand - right_operand
             self.set_address_value(quadruple.temp, temp_val)
-            print(left_operand, '-', right_operand, '=', temp_val)
         elif quadruple.operator == '*':
             # --------------------------- MULTI ---------------------------
             left_operand = self.get_address_value(quadruple.left_operand)
             right_operand = self.get_address_value(quadruple.right_operand)
             temp_val = left_operand * right_operand
             self.set_address_value(quadruple.temp, temp_val)
-            print(left_operand, '*', right_operand, '=', temp_val)
         elif quadruple.operator == '/':
             # --------------------------- DIV ---------------------------
             left_operand = self.get_address_value(quadruple.left_operand)
             right_operand = self.get_address_value(quadruple.right_operand)
             temp_val = left_operand / right_operand
             self.set_address_value(quadruple.temp, temp_val)
-            print(left_operand, '/', right_operand, '=', temp_val)
         elif quadruple.operator == 'y':
             # --------------------------- AND ---------------------------
             left_operand = self.get_address_value(quadruple.left_operand)
             right_operand = self.get_address_value(quadruple.right_operand)
             temp_val = left_operand and right_operand
             self.set_address_value(quadruple.temp, temp_val)
-            print(left_operand, 'and', right_operand, '=', temp_val)
         elif quadruple.operator == 'o':
             # --------------------------- OR ---------------------------
             left_operand = self.get_address_value(quadruple.left_operand)
             right_operand = self.get_address_value(quadruple.right_operand)
             temp_val = left_operand or right_operand
             self.set_address_value(quadruple.temp, temp_val)
-            print(left_operand, 'or', right_operand, '=', temp_val)
         elif quadruple.operator == '>=':
             # --------------------------- GE >= ---------------------------
             left_operand = self.get_address_value(quadruple.left_operand)
             right_operand = self.get_address_value(quadruple.right_operand)
             temp_val = left_operand >= right_operand
             self.set_address_value(quadruple.temp, temp_val)
-            print(left_operand, '>=', right_operand, '=', temp_val)
         elif quadruple.operator == '<=':
             # --------------------------- LE <= ---------------------------
             left_operand = self.get_address_value(quadruple.left_operand)
             right_operand = self.get_address_value(quadruple.right_operand)
             temp_val = left_operand <= right_operand
             self.set_address_value(quadruple.temp, temp_val)
-            print(left_operand, '<=', right_operand, '=', temp_val)
         elif quadruple.operator == '>':
             # --------------------------- GT > ---------------------------
             left_operand = self.get_address_value(quadruple.left_operand)
             right_operand = self.get_address_value(quadruple.right_operand)
             temp_val = left_operand > right_operand
             self.set_address_value(quadruple.temp, temp_val)
-            print(left_operand, '>', right_operand, '=', temp_val)
         elif quadruple.operator == '<':
             # --------------------------- LT < ---------------------------
             left_operand = self.get_address_value(quadruple.left_operand)
             right_operand = self.get_address_value(quadruple.right_operand)
             temp_val = left_operand < right_operand
             self.set_address_value(quadruple.temp, temp_val)
-            print(left_operand, '<', right_operand, '=', temp_val)
         elif quadruple.operator == '!=':
             # --------------------------- NE != ---------------------------
             left_operand = self.get_address_value(quadruple.left_operand)
             right_operand = self.get_address_value(quadruple.right_operand)
             temp_val = left_operand != right_operand
             self.set_address_value(quadruple.temp, temp_val)
-            print(left_operand, '!=', right_operand, '=', temp_val)
         elif quadruple.operator == '==':
             # --------------------------- EQ == ---------------------------
             left_operand = self.get_address_value(quadruple.left_operand)
             right_operand = self.get_address_value(quadruple.right_operand)
             temp_val = left_operand == right_operand
             self.set_address_value(quadruple.temp, temp_val)
-            print(left_operand, '==', right_operand, '=', temp_val)
         elif quadruple.operator == '=':
             # --------------------------- ASSIGNMENT ---------------------------
             temp_val = self.get_address_value(quadruple.left_operand)
             self.set_address_value(quadruple.temp, temp_val)
-            print(quadruple.temp, '=', self.get_address_value(quadruple.temp))
         # #elif quadruple.operator == 'Read':
         # #    pass
-        # elif quadruple.operator == 'Print':
-        #     print(self.get_address_value(quadruple.temp).value)
+        elif quadruple.operator == 'Print':
+            # --------------------------- PRINT ---------------------------
+            try:
+                print(self.get_address_value(quadruple.temp))
+            except:
+                print(quadruple.temp.replace('"', ''))
         elif quadruple.operator == 'GOTO':
             # --------------------------- GOTO ---------------------------
             self.counter = quadruple.temp - 2 # Go to this quad
@@ -177,7 +165,6 @@ class VirtualMachine():
 
             left_operand = self.get_address_value(quadruple.left_operand)
             self.func_call_stack[-1].set_value_by_address(address, left_operand)
-            print('Param', param_idx, '=', left_operand)
         elif quadruple.operator == 'RET':
             # --------------------------- RETURN ---------------------------
             # Obtenemos el número de parámetro - 1
@@ -191,7 +178,6 @@ class VirtualMachine():
             else:
                 self.curr_func = None
             self.counter = self.goto_stack.pop()
-            print('return_address:', return_address, 'return_value:', return_value)
         else:
             print("Not yet handled")
 
