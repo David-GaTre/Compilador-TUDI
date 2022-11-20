@@ -51,9 +51,9 @@ class FunctionMemory():
         for resource, number in resources.items():
             if number > 0:
                 # Manejar None como sin inicializar
-                memory_map[resource] = [None] * number
+                # memory_map[resource] = [None] * number
                 # Manejar valores default
-                # memory_map[resource] = [get_default(resource[1])] * number
+                memory_map[resource] = [get_default(resource[1])] * number
 
         return memory_map
 
@@ -272,4 +272,4 @@ def get_default(token):
     elif token == 'F':
         return 0
     elif token == 'B':
-        return True
+        return False
