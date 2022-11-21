@@ -2,7 +2,7 @@ import argparse
 
 from collections import deque
 from lexer import LexerTudi
-from memory import GLOBAL_START, LOCAL_START, TEMP_START, TEMP_POINTER, CONST_START, CONST_LIMIT, Memory, FunctionMemory
+from memory import GLOBAL_START, LOCAL_START, TEMP_START, TEMP_POINTER, CONST_START, CONST_LIMIT, Memory, FunctionMemory, get_type_by_address
 from parser_tudi import ParserTudi
 
 class VirtualMachine():
@@ -117,8 +117,25 @@ class VirtualMachine():
                 self.set_address_value(temp, temp_val)
                 return
             self.set_address_value(quadruple.temp, temp_val)
-        # #elif quadruple.operator == 'Read':
-        # #    pass
+        elif quadruple.operator == 'Read':
+            quad_temp = quadruple.temp
+            temp_val = input()
+            # Resultado es un pointer, entonces
+            if TEMP_POINTER <= quad_temp and quad_temp < CONST_START:
+                quad_temp = self.curr_func.get_value_by_address(quad_temp)
+
+            # Hacer cast correspondiente
+            t_type = get_type_by_address(quad_temp)
+            if t_type == 'I':
+                temp_val = int(temp_val)
+            elif t_type == 'F':
+                temp_val = float(temp_val)
+            elif t_type == 'B':
+                temp_val = bool(temp_val)
+            elif t_type == 'C':
+                temp_val = temp_val[0]
+
+            self.set_address_value(quad_temp, temp_val)
         elif quadruple.operator == 'Print':
             # --------------------------- PRINT ---------------------------
             try:

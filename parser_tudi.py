@@ -222,20 +222,23 @@ class ParserTudi(object):
     # - Read: Pide input del usuario, como prompt utiliza
     #         el argumento provisto. Retorna un string literal
     def p_io_func(self, p):
-        '''io_func : PRINT '(' io_func_prima ')'
-                   | READ  '(' io_func_prima ')' '''
-        # TODO: Unfinished. Finish later
-        p[0] = p[1]
-        if isinstance(p[3], list):
-            self.quadruple_gen.add_quad_from_parser(p[1], None, None, p[3][0])
-        else:
-            self.quadruple_gen.add_quad_from_parser(p[1], None, None, p[3])
+        '''io_func : print
+                   | read '''
 
-    # El argumento posible de una función I/O
-    def p_io_func_prima(self, p):
-        '''io_func_prima : STRING_LITERAL
-                         | fact_constants'''
-        p[0] = p[1]
+    def p_print(self, p):
+        '''print : PRINT '(' STRING_LITERAL ')'
+                 | PRINT '(' god_exp ')' '''
+        # Pop resultado de expresión
+        if p[3] is None:
+            _, output = self.quadruple_gen.pop_operand()
+        else:
+            output = p[3]
+
+        self.quadruple_gen.add_quad_from_parser(p[1], None, None, output)
+
+    def p_read(self, p):
+        '''read : READ '(' id_exp ')' '''
+        self.quadruple_gen.add_quad_from_parser(p[1], None, None, p[3][0])
 
     # Funciones built-in de cast en TUDI:
     # - Para los tipos de datos: int, float y bool

@@ -264,6 +264,43 @@ class VirtualMemory():
         self.constant_table[str(val)] = new_v
         return address
 
+def get_type_by_address(address):
+    is_int = (
+        (GLOBAL_INT <= address and address < GLOBAL_FLOAT) or
+        (LOCAL_INT <= address and address < LOCAL_FLOAT) or
+        (TEMP_INT <= address and address < TEMP_FLOAT) or
+        (CONST_INT <= address and address < CONST_FLOAT)
+    )
+    is_float = (
+        (GLOBAL_FLOAT <= address and address < GLOBAL_BOOL) or
+        (LOCAL_FLOAT <= address and address < LOCAL_BOOL) or
+        (TEMP_FLOAT <= address and address < TEMP_BOOL) or
+        (CONST_FLOAT <= address and address < CONST_BOOL)
+    )
+    is_bool = (
+        (GLOBAL_BOOL <= address and address < GLOBAL_CHAR) or
+        (LOCAL_BOOL <= address and address < LOCAL_CHAR) or
+        (TEMP_BOOL <= address and address < TEMP_CHAR) or
+        (CONST_BOOL <= address and address < CONST_CHAR)
+    )
+    is_char = (
+        (GLOBAL_CHAR <= address and address < LOCAL_INT) or
+        (LOCAL_CHAR <= address and address < TEMP_INT) or
+        (TEMP_CHAR <= address and address < TEMP_POINTER) or
+        (CONST_CHAR <= address and address < CONST_LIMIT)
+    )
+
+    if is_int:
+        return 'I'
+    if is_float:
+        return 'F'
+    if is_bool:
+        return 'B'
+    if is_char:
+        return 'C'
+
+    raise Exception("Unable to handle input.")
+
 def get_default(token):
     if token == 'I':
         return 0
