@@ -1,0 +1,51 @@
+game sort_n2;
+canvas = 10, 10;
+
+declare {
+    int[10] vec;
+}
+
+func sort : void (int len) {
+    declare {
+        int i, j;
+        int temp;
+    }
+
+    for (i = 0; i < len; i = i + 1) {
+        for (j = i; j < len; j = j + 1) {
+            if (vec[i] > vec[j]) {
+                temp = vec[j];
+                vec[j] = vec[i];
+                vec[i] = temp;
+            }
+        }
+    }
+}
+
+func Start : void () {
+    declare {
+        int len;
+        int i;
+    }
+
+    len = 0;
+    while (len <= 0 o len > 10) {
+        Print("Capacidad de tu arreglo (0 < N <= 10):");
+        Read(len);
+    }
+
+    Print("Rellena tu arreglo: ");
+    for (i = 0; i < len; i = i + 1) {
+        Read(vec[i]);
+    }
+
+    Print("Sorteando ando");
+    sort(len);
+
+    Print("Resultado del sort: ");
+    for (i = 0; i < len; i = i + 1) {
+        Print(vec[i]);
+    }
+}
+
+func Update : void () {}
