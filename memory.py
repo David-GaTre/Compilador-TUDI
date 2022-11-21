@@ -1,4 +1,4 @@
-from collections import deque 
+from quadruples import type_to_char, char_to_type
 
 # NUMERIC CONSTANTS FOR MEMORY ADDRESSING
 GLOBAL_INT, GLOBAL_INT_LIMIT= 0,0
@@ -15,6 +15,7 @@ TEMP_INT, TEMP_INT_LIMIT = 40000, 40000
 TEMP_FLOAT, TEMP_FLOAT_LIMIT = 44000, 44000
 TEMP_BOOL, TEMP_BOOL_LIMIT = 48000, 48000
 TEMP_CHAR, TEMP_CHAR_LIMIT = 52000, 52000
+TEMP_POINTER, TEMP_POINTER_LIMIT = 56000, 56000
 
 CONST_INT, CONST_INT_LIMIT = 60000, 60000
 CONST_FLOAT, CONST_FLOAT_LIMIT = 64000, 64000
@@ -38,6 +39,55 @@ class Memory():
     def __repr__(self):
         return f'Address: {self.address}, Value: {self.value}\n'
 
+class FunctionMemory():
+    def __init__(self, resources, params_sequence, start, return_address):
+        self.memory_map = self._create_memory_map(resources)
+        self.params_sequence = params_sequence
+        self.start = start
+        self.return_address = return_address
+
+    def _create_memory_map(self, resources):
+        memory_map = dict()
+        for resource, number in resources.items():
+            if number > 0:
+                # Manejar None como sin inicializar
+                # memory_map[resource] = [None] * number
+                # Manejar valores default
+                memory_map[resource] = [get_default(resource[1])] * number
+
+        return memory_map
+
+    def get_value_by_address(self, address):
+        addr_type, pos = self._get_type_pos_by_address(address)
+        return self.memory_map[addr_type][pos]
+
+    def set_value_by_address(self, address, value):
+        addr_type, pos = self._get_type_pos_by_address(address)
+        self.memory_map[addr_type][pos] = value
+
+    def _get_type_pos_by_address(self, address):
+        if LOCAL_INT <= address and address < LOCAL_FLOAT:
+            return 'LI', address - LOCAL_INT
+        elif LOCAL_FLOAT <= address and address < LOCAL_BOOL:
+            return 'LF', address - LOCAL_FLOAT
+        elif LOCAL_BOOL <= address and address < LOCAL_CHAR:
+            return 'LB', address - LOCAL_BOOL
+        elif LOCAL_CHAR <= address and address < TEMP_INT:
+            return 'LC', address - LOCAL_CHAR
+        elif TEMP_INT <= address and address < TEMP_FLOAT:
+            return 'TI', address - TEMP_INT
+        elif TEMP_FLOAT <= address and address < TEMP_BOOL:
+            return 'TF', address - TEMP_FLOAT
+        elif TEMP_BOOL <= address and address < TEMP_CHAR:
+            return 'TB', address - TEMP_BOOL
+        elif TEMP_CHAR <= address and address < TEMP_POINTER:
+            return 'TC', address - TEMP_CHAR
+        elif TEMP_POINTER <= address and address < CONST_INT:
+            return 'TP', address - TEMP_POINTER
+        else:
+            raise Exception("Error: Address does not belong to any type")
+
+
 class VirtualMemory():
     def __init__(self):
         # Globales
@@ -45,26 +95,25 @@ class VirtualMemory():
         self.global_float_count = GLOBAL_FLOAT
         self.global_bool_count = GLOBAL_BOOL
         self.global_char_count = GLOBAL_CHAR
-        # TODO: Metodo para resetear local y temporal
         # Locales
         self.local_int_count = LOCAL_INT
         self.local_float_count = LOCAL_FLOAT
         self.local_bool_count = LOCAL_BOOL
         self.local_char_count = LOCAL_CHAR
-        # TODO: Metodo para resetear local y temporal
         # Temporales
         self.temp_int_count = TEMP_INT
         self.temp_float_count = TEMP_FLOAT
         self.temp_bool_count = TEMP_BOOL
         self.temp_char_count = TEMP_CHAR
+        self.temp_pointer_count = TEMP_POINTER
         # Constantes
         self.const_int_count = CONST_INT
         self.const_float_count = CONST_FLOAT
         self.const_bool_count = CONST_BOOL
         self.const_char_count = CONST_CHAR
         # Constant Table
-        self.constant_table= {}
-
+        self.constant_table = {} 
+    
     def get_new_global(self, t_type: str, increment: int = 1) -> int:
         if(t_type == "I"):
             current_next = self.global_int_count
@@ -138,9 +187,15 @@ class VirtualMemory():
             return current_next
         elif (t_type == "C"):
             current_next = self.temp_char_count
-            if (current_next + increment) > CONST_START:
+            if (current_next + increment) > TEMP_POINTER_LIMIT:
                 raise Exception("ERROR: TEMPORAL CHAR MEMORY EXCEEDED")
             self.temp_char_count += increment
+            return current_next
+        elif (t_type == "P"):
+            current_next = self.temp_pointer_count
+            if (current_next + increment) > CONST_START:
+                raise Exception("ERROR: TEMPORAL POINTER MEMORY EXCEEDED")
+            self.temp_pointer_count += increment
             return current_next
 
     def get_new_constant(self, t_type: str, increment: int = 1) -> int:
@@ -169,6 +224,37 @@ class VirtualMemory():
             self.const_char_count += increment
             return current_next
 
+    # Regresa el conteo actual de variables locales y temporales
+    def get_temps_and_locals(self) -> dict:
+        count = {
+            # Locales
+            'LI': self.local_int_count - LOCAL_INT,
+            'LF': self.local_float_count - LOCAL_FLOAT,
+            'LB': self.local_bool_count - LOCAL_BOOL,
+            'LC': self.local_char_count - LOCAL_CHAR,
+            # Temporales
+            'TI': self.temp_int_count - TEMP_INT,
+            'TF': self.temp_float_count - TEMP_FLOAT,
+            'TB': self.temp_bool_count - TEMP_BOOL,
+            'TC': self.temp_char_count - TEMP_CHAR,
+            'TP': self.temp_pointer_count - TEMP_POINTER,
+        }
+        return count
+
+    # Resetea el conteo de variables locales y temporales
+    def reset_temps_and_locals(self) -> None:
+        # Locales
+        self.local_int_count = LOCAL_INT
+        self.local_float_count = LOCAL_FLOAT
+        self.local_bool_count = LOCAL_BOOL
+        self.local_char_count = LOCAL_CHAR
+        # Temporales
+        self.temp_int_count = TEMP_INT
+        self.temp_float_count = TEMP_FLOAT
+        self.temp_bool_count = TEMP_BOOL
+        self.temp_char_count = TEMP_CHAR
+        self.temp_pointer_count = TEMP_POINTER
+
     # Usar para tabla de tabla de constantes en un diccionario
     def get_constant_address(self, val: str, t_type: str, increment: int = 1) -> int:
         if str(val) in self.constant_table:
@@ -178,7 +264,42 @@ class VirtualMemory():
         self.constant_table[str(val)] = new_v
         return address
 
-call_stack = deque()
+def get_type_by_address(address):
+    is_int = (
+        (GLOBAL_INT <= address and address < GLOBAL_FLOAT) or
+        (LOCAL_INT <= address and address < LOCAL_FLOAT) or
+        (TEMP_INT <= address and address < TEMP_FLOAT) or
+        (CONST_INT <= address and address < CONST_FLOAT)
+    )
+    is_float = (
+        (GLOBAL_FLOAT <= address and address < GLOBAL_BOOL) or
+        (LOCAL_FLOAT <= address and address < LOCAL_BOOL) or
+        (TEMP_FLOAT <= address and address < TEMP_BOOL) or
+        (CONST_FLOAT <= address and address < CONST_BOOL)
+    )
+    is_bool = (
+        (GLOBAL_BOOL <= address and address < GLOBAL_CHAR) or
+        (LOCAL_BOOL <= address and address < LOCAL_CHAR) or
+        (TEMP_BOOL <= address and address < TEMP_CHAR) or
+        (CONST_BOOL <= address and address < CONST_CHAR)
+    )
+    is_char = (
+        (GLOBAL_CHAR <= address and address < LOCAL_INT) or
+        (LOCAL_CHAR <= address and address < TEMP_INT) or
+        (TEMP_CHAR <= address and address < TEMP_POINTER) or
+        (CONST_CHAR <= address and address < CONST_LIMIT)
+    )
+
+    if is_int:
+        return 'I'
+    if is_float:
+        return 'F'
+    if is_bool:
+        return 'B'
+    if is_char:
+        return 'C'
+
+    raise Exception("Unable to handle input.")
 
 def get_default(token):
     if token == 'I':
@@ -188,4 +309,4 @@ def get_default(token):
     elif token == 'F':
         return 0
     elif token == 'B':
-        return True
+        return False

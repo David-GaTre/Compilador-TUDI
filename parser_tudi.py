@@ -24,6 +24,11 @@ class ParserTudi(object):
     # - Definición de funciones
     def p_game(self, p):
         '''game : GAME ID ';' CANVAS ASSIGN_OP int ',' int ';' game_vars game_funcs'''
+        self.quadruple_gen.quadruples[0].temp = len(self.quadruple_gen.quadruples)+1
+        self.quadruple_gen.add_quad_from_parser("ERA", None, None, 'Start')
+        self.quadruple_gen.add_quad_from_parser("GOSUB", None, None, 'Start')
+        self.quadruple_gen.add_quad_from_parser("ERA", None, None, 'Update')
+        self.quadruple_gen.add_quad_from_parser("GOSUB", None, None, 'Update')
         p[0] = "Aceptado"
         print("Todo valido")
 
@@ -48,6 +53,7 @@ class ParserTudi(object):
     def p_game_vars(self, p):
         '''game_vars : block_vars
                      | empty'''
+        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, None)
 
     # Definición de funciones:
     # - Funciones definidas por el usuario (opcionales)
@@ -73,12 +79,20 @@ class ParserTudi(object):
 
         # Checar por nombres de variables duplicadas en el scope actual
         for var_id in p[2]:
-            if self.last_vars['scope'] == '0':
-                mem_address = self.virtual_mem.get_new_global(type_to_char[self.last_vars['var_type']], p[1][1])
-            else:
-                mem_address = self.virtual_mem.get_new_local(type_to_char[self.last_vars['var_type']], p[1][1])
+            increment = p[1][1][0]
+            dims = p[1][1][1]
 
-            if not self.func_dir.add_variable(self.last_vars['scope'], var_id.value, self.last_vars['var_type'], mem_address):
+            if self.last_vars['scope'] == '0':
+                mem_address = self.virtual_mem.get_new_global(type_to_char[self.last_vars['var_type']], increment)
+            else:
+                mem_address = self.virtual_mem.get_new_local(type_to_char[self.last_vars['var_type']], increment)
+
+            # Se guarda la dirección de memoria si es un arreglo,
+            # pueste que es la constante que se usará para la dirección base
+            if dims is not None:
+                self.virtual_mem.get_constant_address(mem_address, 'I')
+
+            if not self.func_dir.add_variable(self.last_vars['scope'], var_id.value, self.last_vars['var_type'], mem_address, dims, increment):
                 print(f'Error: Re-declaration of variable \'{var_id.value}\' at line: {var_id.lineno}')
                 raise Exception(f'Error: Re-declaration of variable \'{var_id.value}\' at line: {var_id.lineno}')
 
@@ -102,19 +116,36 @@ class ParserTudi(object):
     # - Código de la función
     def p_declare_func(self, p):
         '''declare_func : FUNC ID ':' func_type seen_dec_func '(' list_params ')' '{' block_vars_code '}' '''
-        self.quadruple_gen.add_quad_from_parser("ENDFUNC", None, None, None)
+        # Si hay valor de retorno, entonces el ENDFUNC tiene en la última casilla
+        # el tipo de retorno. Este es usado para detectar en ejecución, que si se llega
+        # a un quad así esta función no regreso nada y marcar error.
+        return_type = None
+        if isinstance(p[4], list) and p[4][0] != 'void':
+            return_type = p[4][0]
+        self.quadruple_gen.add_quad_from_parser("ENDFUNC", None, None, return_type)
+        self.func_dir.add_resources(p[2], self.virtual_mem.get_temps_and_locals())
+        self.func_dir.clear_var_table(p[2])
+        self.virtual_mem.reset_temps_and_locals()
 
     # Definición de función Start de TUDI:
     # - Si está presente en el programa, la función Start es
     #   la primera en ejecutarse
     def p_func_start(self, p):
         '''func_start : FUNC START ':' VOID seen_dec_func '(' ')' '{' block_vars_code '}' '''
+        self.quadruple_gen.add_quad_from_parser("ENDFUNC", None, None, None)
+        self.func_dir.add_resources(p[2], self.virtual_mem.get_temps_and_locals())
+        self.func_dir.clear_var_table(p[2])
+        self.virtual_mem.reset_temps_and_locals()
 
     # Definición de función Update de TUDI:
     # - Si está presente en el programa, la función Update es
     #   la función que está siendo ejecutada constantemente (loop)
     def p_func_update(self, p):
         '''func_update : FUNC UPDATE ':' VOID seen_dec_func '(' ')' '{' block_vars_code '}' '''
+        self.quadruple_gen.add_quad_from_parser("ENDFUNC", None, None, None)
+        self.func_dir.add_resources(p[2], self.virtual_mem.get_temps_and_locals())
+        self.func_dir.clear_var_table(p[2])
+        self.virtual_mem.reset_temps_and_locals()
 
     # Lista de parámetros de una función
     def p_list_params(self, p):
@@ -133,6 +164,8 @@ class ParserTudi(object):
                      | VOID '''
         if len(p[1]) == 2:
             p[0] = p[1]
+            if p[1][1][1] is not None:
+                raise Exception(f"Functions return values cannot be arrays")
         else:
             p[0] = [p[1], 0]
 
@@ -189,17 +222,23 @@ class ParserTudi(object):
     # - Read: Pide input del usuario, como prompt utiliza
     #         el argumento provisto. Retorna un string literal
     def p_io_func(self, p):
-        '''io_func : PRINT '(' io_func_prima ')'
-                   | READ  '(' io_func_prima ')' '''
-        # TODO: Unfinished. Finish later
-        p[0] = p[1]
-        self.quadruple_gen.add_quad_from_parser(p[1], None, None, None)
+        '''io_func : print
+                   | read '''
 
-    # El argumento posible de una función I/O
-    def p_io_func_prima(self, p):
-        '''io_func_prima : STRING_LITERAL
-                         | empty'''
-        # TODO: Unfinished. Finish later
+    def p_print(self, p):
+        '''print : PRINT '(' STRING_LITERAL ')'
+                 | PRINT '(' god_exp ')' '''
+        # Pop resultado de expresión
+        if p[3] is None:
+            _, output = self.quadruple_gen.pop_operand()
+        else:
+            output = p[3]
+
+        self.quadruple_gen.add_quad_from_parser(p[1], None, None, output)
+
+    def p_read(self, p):
+        '''read : READ '(' id_exp ')' '''
+        self.quadruple_gen.add_quad_from_parser(p[1], None, None, p[3][0])
 
     # Funciones built-in de cast en TUDI:
     # - Para los tipos de datos: int, float y bool
@@ -482,13 +521,29 @@ class ParserTudi(object):
         if len(p) == 6:
             if p[2][2] <= 0 or p[4][2] <= 0:
                 raise Exception(f"Array dimensions must be greater than 0")
-            p[0] = p[2][2] * p[4][2]
+            m0 = p[2][2] * p[4][2]
+            bound1 = self.virtual_mem.get_constant_address(p[2][2], 'I')
+            bound2 = self.virtual_mem.get_constant_address(p[4][2], 'I')
+            m1 = self.virtual_mem.get_constant_address(p[4][2], 'I')
+            zero = self.virtual_mem.get_constant_address(0, 'I')
+
+            # Limite superior 1 y m1
+            dim1 = (bound1, m1)
+            # Limite superior 2 y (-K)
+            dim2 = (bound2, zero)
+
+            p[0] = (m0, [dim1, dim2])
         elif len(p) == 4:
             if p[2][2] <= 0:
                 raise Exception(f"Array dimensions must be greater than 0")
-            p[0] = p[2][2]
+            bound1 = self.virtual_mem.get_constant_address(p[2][2], 'I')
+            zero = self.virtual_mem.get_constant_address(0, 'I')
+
+            # Limite superior 1 y (-K)
+            dim1 = (bound1, zero)
+            p[0] = (p[2][2], [dim1])
         else:
-            p[0] = 1
+            p[0] = (1, None)
 
     # Expresión (lógica, relacional, aritmética)
     def p_god_exp(self, p):
@@ -609,23 +664,96 @@ class ParserTudi(object):
     # - Variable
     # - Elemento de un arreglo de 1 o 2 dimensiones
     def p_id_exp(self, p):
-        '''id_exp : ID
-                  | ID '[' seen_fact_open god_exp seen_god_exp ']' seen_fact_close
-                  | ID '[' seen_fact_open god_exp seen_god_exp seen_fact_close ',' seen_fact_open god_exp seen_god_exp ']' seen_fact_close '''
-        if len(p) == 13:
-            p[0] = Token([p[1], p[4], p[9]], p.lineno(1))
-        elif len(p) == 8:
-            p[0] = Token([p[1], p[4]], p.lineno(1))
+        '''id_exp : ID check_id
+                  | ID check_id '[' seen_fact_open god_exp ']' seen_dim1 seen_fact_close
+                  | ID check_id '[' seen_fact_open god_exp seen_fact_close seen_dim2_1 ',' seen_fact_open god_exp ']' seen_fact_close  seen_dim2_2 '''
+        if len(p) > 3:
+            t_type, operand = self.quadruple_gen.pop_operand()
+            p[0] = [operand, t_type]
         else:
-            p[0] = Token([p[1]], p.lineno(1))
+            var= p[2]
+            p[0] = [var['address'], type_to_char[var["type"]]]
 
+    def p_check_id(self, p):
+        '''check_id : '''
         # Checa si la variable fue declarada con anterioridad
-        if not self.func_dir.find_variable(self.last_vars['scope'], p[1]):
-            print(f'Error: Variable \'{p[1]}\' at line {p.lineno(1)} was not declared.')
-            raise Exception(f'Error: Variable \'{p[1]}\' at line {p.lineno(1)} was not declared.')
+        if not self.func_dir.find_variable(self.last_vars['scope'], p[-1]):
+            print(f'Error: Variable \'{p[-1]}\' at line {p.lineno(-1)} was not declared.')
+            raise Exception(f'Error: Variable \'{p[-1]}\' at line {p.lineno(-1)} was not declared.')
 
-        var = {"name": p[1]} | self.func_dir.find_variable(self.last_vars['scope'], p[1])
-        p[0] = [var['address'], type_to_char[var["type"]]]
+        p[0] = {"name": p[-1]} | self.func_dir.find_variable(self.last_vars['scope'], p[-1])
+
+    def p_seen_dim1(self, p):
+        '''seen_dim1 : '''
+        # Checar si la variable es un arreglo de una dimensión
+        var = p[-5]
+        if len(var["dims"]) != 1:
+            raise Exception(f'Error: Variable \'{var["name"]}\' is not an array')
+
+        # Checar que el operando es de tipo entero
+        t_type, operand = self.quadruple_gen.pop_operand()
+        if t_type != 'I':
+            raise Exception(f'Error: Index of {var["name"]} must be an integer')
+
+        # Agrega quad VER para verificar en ejecución que
+        # el operando esté dentro de los límites [0, var[dims][0][0])
+        self.quadruple_gen.add_quad_from_parser('VER', operand, None, var["dims"][0][0])
+
+        # Suma el operando a la dirección base y lo guarda en un temporal pointer
+        temp_pointer = self.virtual_mem.get_new_temporal('P')
+        dirBase = self.virtual_mem.get_constant_address(var["address"], 'I')
+        self.quadruple_gen.add_operand(type_to_char[var["type"]], temp_pointer)
+        self.quadruple_gen.add_quad_from_parser('+', operand, dirBase, temp_pointer)
+
+    
+    def p_seen_dim2_1(self, p):
+        '''seen_dim2_1 : '''
+        # Checar si la variable es un arreglo de dos dimensiones
+        var = p[-5]
+        if len(var["dims"]) != 2:
+            raise Exception(f'Error: Variable \'{var["name"]}\' is not a matrix')
+
+        # Checar que el operando es de tipo entero
+        t_type, operand = self.quadruple_gen.pop_operand()
+        if t_type != 'I':
+            raise Exception(f'Error: Index of {var["name"]} must be an integer')
+
+        # Agrega quad VER para verificar en ejecución que
+        # el operando esté dentro de los límites [0, var[dims][0][0])
+        self.quadruple_gen.add_quad_from_parser('VER', operand, None, var["dims"][0][0])
+
+        # Multiplica el operando * m1
+        temp_int = self.virtual_mem.get_new_temporal('I')
+        self.quadruple_gen.add_quad_from_parser('*', operand, var["dims"][0][1], temp_int)
+        self.quadruple_gen.add_operand('I', temp_int)
+
+    def p_seen_dim2_2(self, p):
+        '''seen_dim2_2 : '''
+        # Checar si la variable es un arreglo de dos dimensiones
+        var = p[-11]
+
+        # Checar que el operando es de tipo entero
+        t_type, operand = self.quadruple_gen.pop_operand()
+        if t_type != 'I':
+            raise Exception(f'Error: Index of {var["name"]} must be an integer')
+
+        # Agrega quad VER para verificar en ejecución que
+        # el operando esté dentro de los límites [0, var[dims][1][0])
+        self.quadruple_gen.add_quad_from_parser('VER', operand, None, var["dims"][1][0])
+
+        # Suma el operando y k
+        t_type_sm, operand_sm = self.quadruple_gen.pop_operand()
+        if t_type_sm != 'I':
+            raise Exception(f'Error: Index of {var["name"]} must be an integer')
+
+        temp_int = self.virtual_mem.get_new_temporal('I')
+        self.quadruple_gen.add_quad_from_parser('+', operand_sm, operand, temp_int)
+
+        # Suma el operando a la dirección base y lo guarda en un temporal pointer
+        temp_pointer = self.virtual_mem.get_new_temporal('P')
+        dirBase = self.virtual_mem.get_constant_address(var["address"], 'I')
+        self.quadruple_gen.add_operand(type_to_char[var["type"]], temp_pointer)
+        self.quadruple_gen.add_quad_from_parser('+', temp_int, dirBase, temp_pointer)
 
     def p_seen_dec_func(self, p):
         '''seen_dec_func :'''
@@ -645,7 +773,7 @@ class ParserTudi(object):
 
         # Agrega como variable global el nombre de la función como lo visto en clase
         if return_type != "void":
-            mem_address = self.virtual_mem.get_new_global(type_to_char[return_type], p[-1][1])
+            mem_address = self.virtual_mem.get_new_global(type_to_char[return_type], p[-1][1][0])
             self.func_dir.add_return_address(self.last_vars['scope'], mem_address)
 
     def p_seen_param(self, p):
@@ -654,9 +782,13 @@ class ParserTudi(object):
         # la declaración de un parámetro.
         # p[-1] es la producción en la que aparece nombre del parámetro
         # p[-2] es la producción en la que aparece el tipo de dato
+        dims = p[-2][1][1]
+        if dims is not None:
+            raise Exception(f"Functions parameters cannot be arrays")
+
         mem_address = self.virtual_mem.get_new_local(type_to_char[p[-2][0]])
 
-        if not self.func_dir.add_param(self.last_vars['scope'], p[-1], p[-2][0], mem_address):
+        if not self.func_dir.add_param(self.last_vars['scope'], p[-1], p[-2][0], mem_address, dims):
             print(f'Error: Re-declaration of function parameter \'{p[-1]}\'.')
             raise Exception(f'Error: Re-declaration of function parameter \'{p[-1]}\'.')
 
@@ -683,3 +815,12 @@ class ParserTudi(object):
     # Parse input data
     def parse(self, data):
         return self.parser.parse(data)
+
+    def get_quadruples(self):
+        return self.quadruple_gen.quadruples
+
+    def get_function_directory(self):
+        return self.func_dir
+
+    def get_constant_table(self):
+        return {v.address: v.value for k, v in self.virtual_mem.constant_table.items()}
