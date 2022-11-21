@@ -1,0 +1,29 @@
+game fibonacci_recursivo;
+canvas = 10, 10;
+
+func fibonacci : int (int fib) {
+    if (fib <= 2) {
+        return 1;
+    }
+
+    return fibonacci(fib - 2) + fibonacci(fib - 1);
+}
+
+func Start : void () {
+    declare {
+        int x;
+        int res;
+    }
+
+    x = 0;
+    while (x <= 0) {
+        Print("Calcula el fibonacci N (N >= 1):");
+        Read(x);
+    }
+
+    Print("Resultado: ");
+    res = fibonacci(x);
+    Print(res);
+}
+
+func Update : void () {}

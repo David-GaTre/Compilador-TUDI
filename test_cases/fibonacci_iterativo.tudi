@@ -1,0 +1,37 @@
+game fibonacci_iterativo;
+canvas = 10, 10;
+
+func fibonacci : int (int fib) {
+    declare {
+        int i, res, prev, temp;
+    }
+
+    prev = 1;
+    res = 1;
+    for (i = 2; i < fib; i = i + 1) {
+        temp = res;
+        res = res + prev;
+        prev = temp;
+    }
+
+    return res;
+}
+
+func Start : void () {
+    declare {
+        int x;
+        int res;
+    }
+
+    x = 0;
+    while (x <= 0) {
+        Print("Calcula el fibonacci N (N >= 1):");
+        Read(x);
+    }
+
+    Print("Resultado: ");
+    res = fibonacci(x);
+    Print(res);
+}
+
+func Update : void () {}
