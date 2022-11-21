@@ -1,0 +1,53 @@
+game find_vec;
+canvas = 10, 10;
+
+declare {
+    int[10] vec;
+}
+
+func find : int (int value, int len) {
+    declare {
+        int i;
+    }
+
+    for (i = 0; i < len; i = i + 1) {
+        if (value == vec[i]) {
+            return i;
+        }
+    }
+
+    return 0 - 1;
+}
+
+func Start : void () {
+    declare {
+        int len, idx, val;
+        int i;
+    }
+
+    len = 0;
+    while (len <= 0 o len > 10) {
+        Print("Capacidad de tu arreglo (0 < N <= 10):");
+        Read(len);
+    }
+
+    Print("Rellena tu arreglo: ");
+    for (i = 0; i < len; i = i + 1) {
+        Read(vec[i]);
+    }
+
+    Print("Elemento a buscar: ");
+    Read(val);
+
+    Print("Buscando ando");
+    idx = find(val, len);
+
+    if (idx >= 0) {
+        Print("Valor encontrado en (0-based):");
+        Print(idx);
+    } else {
+        Print("No se encontro el valor en el vector");
+    }
+}
+
+func Update : void () {}
