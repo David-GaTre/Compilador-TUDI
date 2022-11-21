@@ -1,4 +1,10 @@
 # TUDI
+## Avance 7
+Creación de cuádruplos de arreglos y de funciones I/O.
+
+Refactorización de la clase de memoria virtual así como actualización del manejo de memoria virtual para creación de cuádruplos y ejecución. Creación de clase de memoria de funciones para matar memoria al final de ejecución. 
+
+Creación completa de máquina virtual así como cambio en manera de ejecutar programas.
 
 ## Avance 6
 Creación de memoria virtual en todos los niveles y sustitución con memorias virtuales en los cuádruplos. Código de funciones y sus cuádruplos esta terminado.
