@@ -119,7 +119,7 @@ class VirtualMachine():
             self.set_address_value(quadruple.temp, temp_val)
         elif quadruple.operator == 'Read':
             quad_temp = quadruple.temp
-            temp_val = input()
+            temp_val = input("> ")
             # Resultado es un pointer, entonces
             if TEMP_POINTER <= quad_temp and quad_temp < CONST_START:
                 quad_temp = self.curr_func.get_value_by_address(quad_temp)
@@ -236,7 +236,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog="TUDI-VM", description="Virtual machine to parse and execute the TUDI programming language")
     parser.add_argument("filename", help="Filename with a TUDI program to parse and execute.")
     args = parser.parse_args()
-    print(args)
 
     f = open(args.filename, 'r')
     data = f.read()

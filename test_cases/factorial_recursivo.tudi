@@ -1,0 +1,29 @@
+game factorial_recursivo;
+canvas = 10, 10;
+
+func factorial : int (int num) {
+    if (num <= 1) {
+        return 1;
+    }
+
+    return num * factorial(num - 1);
+}
+
+func Start : void () {
+    declare {
+        int x;
+        int res;
+    }
+
+    x = 0 - 1;
+    while (x < 0) {
+        Print("Calcula el factorial de N (N >= 0):");
+        Read(x);
+    }
+
+    Print("Resultado: ");
+    res = factorial(x);
+    Print(res);
+}
+
+func Update : void () {}

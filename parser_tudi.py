@@ -30,24 +30,25 @@ class ParserTudi(object):
         self.quadruple_gen.add_quad_from_parser("ERA", None, None, 'Update')
         self.quadruple_gen.add_quad_from_parser("GOSUB", None, None, 'Update')
         p[0] = "Aceptado"
-        print("Todo valido")
+        if self.verbose:
+            print("Todo valido")
 
-        for func, func_items in self.func_dir.directory.items():
-            print('Scope:', func)
-            for func_item, values in func_items.items():
-                if func_item == 'table':
-                    print('\t- Variables:')
-                    for k, v  in values.table.items():
-                        print('\t---', k, v)
-                else:
-                    print('\t-', func_item, ':', values)
+            for func, func_items in self.func_dir.directory.items():
+                print('Scope:', func)
+                for func_item, values in func_items.items():
+                    if func_item == 'table':
+                        print('\t- Variables:')
+                        for k, v  in values.table.items():
+                            print('\t---', k, v)
+                    else:
+                        print('\t-', func_item, ':', values)
+                print()
+
+            print("Constant table:")
+            print(self.virtual_mem.constant_table)
             print()
-        
-        print("Constant table:")
-        print(self.virtual_mem.constant_table)
-        print()
 
-        self.quadruple_gen.print_quadruples()
+            self.quadruple_gen.print_quadruples()
 
     # Declaración de variables globales (opcional)
     def p_game_vars(self, p):
@@ -803,11 +804,12 @@ class ParserTudi(object):
         raise Exception("Syntax error in input at line: ", p, p.lineno)
 
     # Build parser with initial state
-    def build(self, lexer, **kwargs):
+    def build(self, lexer, verbose=False, **kwargs):
         self.func_dir = FunctionsDirectory()
         self.last_vars = {'scope': self.func_dir.GLOBAL_ENV, 'var_type': None}
         self.quadruple_gen = QuadrupleGenerator()
         self.virtual_mem = VirtualMemory()
+        self.verbose = verbose
 
         self.lexer = lexer
         self.parser = yacc.yacc(module=self, **kwargs)
