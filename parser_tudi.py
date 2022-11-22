@@ -196,8 +196,7 @@ class ParserTudi(object):
                      | while_loop
                      | conditional
                      | assignment ';'
-                     | return ';'
-                     | call_method ';' '''
+                     | return ';' '''
 
     # Añadir un estatuto más
     def p_statement_prima(self, p):
@@ -331,23 +330,6 @@ class ParserTudi(object):
         self.quadruple_gen.add_quad_from_parser("PARAM", operand, None, f"par{param_counter + 1}")
         self.quadruple_gen.params_stack[-1][1] += 1
 
-    # Llamada a un método, requisitos:
-    # - Los únicos métodos en TUDI pertenecen a una variable de tipo sprite
-    def p_call_method(self, p):
-        '''call_method : id_exp '.' call_method_prima '(' list_args ')' '''
-
-    # Los métodos built-in en TUDI para el tipo de dato sprite:
-    # - SetPosition: Recibe dos floats,
-    #                correspondientes a las coordenadas (x, y)
-    # - Translate: Recibe dos floats,
-    #              desplaza el sprite en las dos dimensiones
-    # - SetControllable: Recibe un bool,
-    #                    define si el sprite puede ser manipulado por las teclas del usuario
-    def p_call_method_prima(self, p):
-        '''call_method_prima : SETPOSITION
-                             | TRANSLATE
-                             | SETCONTROLLABLE '''
-
     # Lista de argumentos (expresiones)
     def p_list_args_func(self, p):
         '''list_args_func : god_exp call_neuro_3 list_args_func_prima
@@ -356,16 +338,6 @@ class ParserTudi(object):
     # Añadir un argumento a la lista de argumentos
     def p_list_args_func_prima(self, p):
         '''list_args_func_prima : ',' god_exp call_neuro_3 list_args_func_prima
-                           | empty'''
-
-    # Lista de argumentos (expresiones)
-    def p_list_args(self, p):
-        '''list_args : god_exp seen_god_exp list_args_prima
-                     | empty'''
-
-    # Añadir un argumento a la lista de argumentos
-    def p_list_args_prima(self, p):
-        '''list_args_prima : ',' god_exp seen_god_exp list_args_prima
                            | empty'''
 
     # Ciclo for loop (C/C++ style)
