@@ -119,7 +119,7 @@ class VirtualMachine():
             self.set_address_value(quadruple.temp, temp_val)
         elif quadruple.operator == 'Read':
             quad_temp = quadruple.temp
-            temp_val = input("> ")
+            temp_val = input()
             # Resultado es un pointer, entonces
             if TEMP_POINTER <= quad_temp and quad_temp < CONST_START:
                 quad_temp = self.curr_func.get_value_by_address(quad_temp)
@@ -139,9 +139,10 @@ class VirtualMachine():
         elif quadruple.operator == 'Print':
             # --------------------------- PRINT ---------------------------
             try:
-                print(self.get_address_value(quadruple.temp))
+                print(self.get_address_value(quadruple.temp), end="")
             except:
-                print(quadruple.temp.replace('"', ''))
+                temp = quadruple.temp.replace('\\n', '\n')
+                print(temp.replace('"', ''), end="")
         elif quadruple.operator == 'GOTO':
             # --------------------------- GOTO ---------------------------
             self.counter = quadruple.temp - 2 # Go to this quad
