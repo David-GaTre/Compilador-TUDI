@@ -1,0 +1,35 @@
+game factorial_iterativo;
+canvas = 10, 10;
+
+func factorial : int (int num) {
+    declare {
+        int i;
+        int res;
+    }
+
+    res = 1;
+    for (i = 2; i <= num; i = i + 1) {
+        res = res * i;
+    }
+
+    return res;
+}
+
+func Start : void () {
+    declare {
+        int x;
+        int res;
+    }
+
+    x = 0 - 1;
+    while (x < 0) {
+        Print("Calcula el factorial de N (N >= 0): ");
+        Read(x);
+    }
+
+    Print("Resultado: ");
+    res = factorial(x);
+    Print(res);
+}
+
+func Update : void () {}

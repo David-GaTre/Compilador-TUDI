@@ -139,9 +139,10 @@ class VirtualMachine():
         elif quadruple.operator == 'Print':
             # --------------------------- PRINT ---------------------------
             try:
-                print(self.get_address_value(quadruple.temp))
+                print(self.get_address_value(quadruple.temp), end="")
             except:
-                print(quadruple.temp.replace('"', ''))
+                temp = quadruple.temp.replace('\\n', '\n')
+                print(temp.replace('"', ''), end="")
         elif quadruple.operator == 'GOTO':
             # --------------------------- GOTO ---------------------------
             self.counter = quadruple.temp - 2 # Go to this quad
@@ -236,7 +237,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog="TUDI-VM", description="Virtual machine to parse and execute the TUDI programming language")
     parser.add_argument("filename", help="Filename with a TUDI program to parse and execute.")
     args = parser.parse_args()
-    print(args)
 
     f = open(args.filename, 'r')
     data = f.read()
