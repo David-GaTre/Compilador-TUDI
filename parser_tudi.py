@@ -187,6 +187,40 @@ class ParserTudi(object):
         '''block_code : statement statement_prima
                       | empty'''
 
+    def p_pygame_func(self, p):
+        '''pygame_func : init_game
+                       | random
+                       | game_over
+                       | write_screen
+                       | get_event
+                       | draw_rect
+                       | set_fill
+                       | sleep '''
+    
+    def p_init_game(self, p):
+        ''' '''
+
+    def p_random(self, p):
+        ''' '''
+
+    def p_game_over(self, p):
+        ''' '''
+
+    def p_write_screen(self, p):
+        ''' '''
+
+    def p_get_event(self, p):
+        ''' '''
+
+    def p_draw_rect(self, p):
+        ''' '''
+
+    def p_set_fill(self, p):
+        ''' '''
+
+    def p_sleep(self, p):
+        ''' '''
+
     # Un estatuto puede ser:
     # - Llamada a una función o métodos
     # - Ciclos o condicionales
@@ -199,7 +233,8 @@ class ParserTudi(object):
                      | conditional
                      | assignment ';'
                      | return ';'
-                     | call_method ';' '''
+                     | call_method ';' 
+                     | pygame_func ';' '''
 
     # Añadir un estatuto más
     def p_statement_prima(self, p):

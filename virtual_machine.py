@@ -1,4 +1,7 @@
 import argparse
+import pygame
+import time
+import random
 
 from collections import deque
 from lexer import LexerTudi

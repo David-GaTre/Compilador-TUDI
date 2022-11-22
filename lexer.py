@@ -32,6 +32,14 @@ reserved = {
     'SetPosition': 'SETPOSITION',
     'Translate': 'TRANSLATE',
     'SetControllable': 'SETCONTROLLABLE',
+    'init_game': 'INIT_GAME',
+    'random': 'RANDOM',
+    'game_over': 'GAME_OVER',
+    'write_screen': 'WRITE_SCREEN',
+    'get_event': 'GET_EVENT',
+    'draw_rect': 'DRAW_RECT',
+    'set_fill': 'SET_FILL',
+    'sleep': 'SLEEP'
 }
 
 class LexerTudi(object):
