@@ -139,10 +139,10 @@ class VirtualMachine():
         elif quadruple.operator == 'Print':
             # --------------------------- PRINT ---------------------------
             try:
-                print(self.get_address_value(quadruple.temp), end="")
+                print(self.get_address_value(quadruple.temp), end="", flush=True)
             except:
                 temp = quadruple.temp.replace('\\n', '\n')
-                print(temp.replace('"', ''), end="")
+                print(temp.replace('"', ''), end="", flush=True)
         elif quadruple.operator == 'GOTO':
             # --------------------------- GOTO ---------------------------
             self.counter = quadruple.temp - 2 # Go to this quad
