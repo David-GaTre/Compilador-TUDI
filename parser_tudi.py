@@ -215,13 +215,17 @@ class ParserTudi(object):
         p[0] = p[1]
 
     def p_draw_rect(self, p):
-        '''draw_rect : DRAW_RECT '(' STRING_LITERAL ',' id_exp ',' id_exp ',' id_exp ',' id_exp ')' '''
+        '''draw_rect : DRAW_RECT '(' STRING_LITERAL ',' god_exp ',' god_exp ',' god_exp ',' god_exp ')' '''
         color = p[3]
-
-        if p[5][0] != 'I' or p[9][0] != 'I' or p[7][0] != 'I' or p[1][0] != 'I':
+        t_type1, operand1 = self.quadruple_gen.pop_operand()
+        t_type2, operand2 = self.quadruple_gen.pop_operand()
+        t_type3, operand3 = self.quadruple_gen.pop_operand()
+        t_type4, operand4 = self.quadruple_gen.pop_operand()
+        
+        if t_type1 != 'I' or t_type2 != 'I' or t_type3 != 'I' or t_type4 != 'I':
             raise Exception("Arguments must be all integers besides the first.")
         
-        self.quadruple_gen.add_quad_from_parser("DRAW_RECT", None, None, [color, p[5][0], p[7][0], p[9][0], p[11][0]] )
+        self.quadruple_gen.add_quad_from_parser("DRAW_RECT", None, None, [color, operand4, operand3, operand2, operand1] )
         p[0] = p[1]
 
     def p_set_fill(self, p):
@@ -235,11 +239,13 @@ class ParserTudi(object):
         p[0] = p[1]
 
     def p_tick(self, p):
-        '''tick : TICK '(' id_exp ')' '''
+        '''tick : TICK '(' god_exp ')' '''
+        t_type1, operand1 = self.quadruple_gen.pop_operand()
 
-        if p[3][0] != 'I':
+        if t_type1 != 'I':
             raise Exception("Tick time must be int")
-        self.quadruple_gen.add_quad_from_parser("TICK", None, None, p[3][0])
+        
+        self.quadruple_gen.add_quad_from_parser("TICK", None, None, operand1)
         p[0] = p[1]
 
     # Un estatuto puede ser:
@@ -331,12 +337,13 @@ class ParserTudi(object):
         p[0] = output
 
     def p_pygame_func_call(self, p):
-        '''pygame_func_call : GET_EVENT '(' ')'
-                            | RANDOM '(' int ',' int ')' '''
-        if len(p) == 4:
-            self.quadruple_gen.add_quad_from_parser("GET_EVENT", None, None, None)
-        if len(p) == 7:
-            self.quadruple_gen.add_quad_from_parser("RANDOM", p[3][0], p[5][0], None)
+        '''pygame_func_call : GET_EVENT '(' id_exp ')'
+                            | RANDOM '(' int ',' int  ',' id_exp ')' '''
+        if len(p) == 5:
+            self.quadruple_gen.add_quad_from_parser("GET_EVENT", None, None, p[3][0])
+        if len(p) == 9:
+            self.quadruple_gen.add_quad_from_parser("RANDOM", p[3][0], p[5][0], p[7][0])
+        p[0] = [p[1], 'V']
 
     # Llamada a una función
     def p_call_func(self, p):

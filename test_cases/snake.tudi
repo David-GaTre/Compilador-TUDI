@@ -28,8 +28,8 @@ func Start : void () {
     snake_body[3,1] = 50;
 
     fruit_spawn = true;
-    fruit_position[0] = random(1, 720);
-    fruit_position[1] = random(1, 480);
+    random(1, 720, fruit_position[0]);
+    random(1, 480, fruit_position[0]);
 
     direction = 0;
     change_to = direction;
@@ -42,7 +42,7 @@ func Update : void () {
     declare {
         int i;
     }
-    event = get_event();
+    get_event(event);
 
     if(event == 3) {
         change_to = 3;
@@ -89,8 +89,8 @@ func Update : void () {
     }
 
     if (fruit_spawn y true) {
-        fruit_position[0] = random(1, 720);
-        fruit_position[1] = random(1, 480);
+        random(1, 720, fruit_position[0]);
+        random(1, 480, fruit_position[0]);
     }
 
     fruit_spawn = true;
