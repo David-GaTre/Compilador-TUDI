@@ -19,7 +19,6 @@ reserved = {
     'char': 'CHAR',
     'void': 'VOID',
     'canvas': 'CANVAS',
-    'sprite': 'SPRITE',
     'func': 'FUNC',
     'return': 'RETURN',
     'declare': 'DECLARE',
@@ -40,7 +39,8 @@ reserved = {
     'draw_rect': 'DRAW_RECT',
     'set_fill': 'SET_FILL',
     'tick': 'TICK',
-    'update_game': 'UPDATE_GAME'
+    'update_game': 'UPDATE_GAME',
+    'no': 'NOT'
 }
 
 class LexerTudi(object):
