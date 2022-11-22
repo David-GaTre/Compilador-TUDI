@@ -14,7 +14,6 @@ func show_score : void () {
 }
 
 func Start : void () {
-    declare {}
     snake_speed = 15;
     snake_position[0] = 100;
     snake_position[1] = 50;
@@ -29,22 +28,21 @@ func Start : void () {
     snake_body[3,1] = 50;
 
     fruit_spawn = true;
-    fruit_position[0] = RANDOM(1, 720);
-    fruit_position[1] = RANDOM(1, 480);
+    fruit_position[0] = random(1, 720);
+    fruit_position[1] = random(1, 480);
 
     direction = 0;
     change_to = direction;
     score = 0;
 
     init_game;
-
 }
 
 func Update : void () {
     declare {
         int i;
     }
-    event = get_event;
+    event = get_event();
 
     if(event == 3) {
         change_to = 3;
@@ -91,8 +89,8 @@ func Update : void () {
     }
 
     if (fruit_spawn y true) {
-        fruit_position[0] = RANDOM(1, 720);
-        fruit_position[1] = RANDOM(1, 480);
+        fruit_position[0] = random(1, 720);
+        fruit_position[1] = random(1, 480);
     }
 
     fruit_spawn = true;
@@ -104,21 +102,21 @@ func Update : void () {
     draw_rect("WHITE", fruit_position[0], fruit_position[1], 10, 10);
 
     if (snake_position[0] < 0 o snake_position[0] > 710) {
-        game_over("game");
+        game_over;
     }
 
     if (snake_position[1] < 0 o snake_position[1] > 470) {
-        game_over("game");
+        game_over;
     }
 
     for (i = 1; i < 4; i = i + 1) {
         if (snake_position[0] == snake_body[i, 0] y snake_position[1] == snake_body[i, 1]) {
-            game_over("game");
+            game_over;
         }
     }
 
     show_score();
 
-    update;
-    tick;
+    update_game;
+    tick(snake_speed);
 }

@@ -39,7 +39,8 @@ reserved = {
     'get_event': 'GET_EVENT',
     'draw_rect': 'DRAW_RECT',
     'set_fill': 'SET_FILL',
-    'sleep': 'SLEEP'
+    'tick': 'TICK',
+    'update_game': 'UPDATE_GAME'
 }
 
 class LexerTudi(object):
