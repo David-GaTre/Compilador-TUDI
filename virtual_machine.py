@@ -72,6 +72,11 @@ class VirtualMachine():
             right_operand = self.get_address_value(quadruple.right_operand)
             temp_val = left_operand or right_operand
             self.set_address_value(quadruple.temp, temp_val)
+        elif quadruple.operator == 'no':
+            # --------------------------- NOT ---------------------------
+            right_operand = self.get_address_value(quadruple.right_operand)
+            temp_val = not right_operand
+            self.set_address_value(quadruple.temp, temp_val)
         elif quadruple.operator == '>=':
             # --------------------------- GE >= ---------------------------
             left_operand = self.get_address_value(quadruple.left_operand)

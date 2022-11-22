@@ -1,7 +1,7 @@
 from collections import deque
 
-type_to_char = {'int': 'I', 'float': 'F', 'char': 'C', 'bool': 'B', 'arr1d': 'A', 'sprite': 'S', 'void': 'V'}
-char_to_type = {'I': 'int', 'F': 'float', 'C': 'char', 'B': 'bool', 'A': 'arr1d', 'S': 'sprite', 'V': 'void'}
+type_to_char = {'int': 'I', 'float': 'F', 'char': 'C', 'bool': 'B', 'unary': 'U', 'void': 'V'}
+char_to_type = {'I': 'int', 'F': 'float', 'C': 'char', 'B': 'bool', 'U': 'unary', 'V': 'void'}
 
 class QuadrupleGenerator():
     def __init__(self):

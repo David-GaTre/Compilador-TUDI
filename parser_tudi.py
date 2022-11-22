@@ -484,8 +484,7 @@ class ParserTudi(object):
         '''type : INT type_dims
                 | FLOAT type_dims
                 | BOOLEAN type_dims
-                | CHAR type_dims
-                | SPRITE type_dims'''
+                | CHAR type_dims'''
         # TODO: Implementar arreglos correctamente
         # if p[2] is not None:
         #     p[0] = "-".join([p[1], p[2]])
@@ -530,12 +529,6 @@ class ParserTudi(object):
     def p_god_exp(self, p):
         '''god_exp : super_exp seen_super_exp god_exp_prima'''
         self.quadruple_gen.finish_expression(sem_cube, self.virtual_mem)
-
-    def p_seen_god_exp(self, p):
-        '''seen_god_exp : '''
-        # TODO: Hacer quads de funciones, asignación, etc.
-        # Por el momento eliminar la expresion de los stacks
-        self.quadruple_gen.pop_operand()
 
     def p_seen_super_exp(self, p):
         '''seen_super_exp : '''
@@ -590,12 +583,21 @@ class ParserTudi(object):
     # - Llamadas a una función (lo que retorna)
     def p_fact(self, p):
         '''fact : '(' seen_fact_open god_exp ')' seen_fact_close
-                | fact_constants '''
+                | fact_constants
+                | '-' seen_unary fact
+                | NOT seen_unary fact '''
 
         if len(p) == 2:
             # (Type, operand)
             self.quadruple_gen.add_operand(p[1][1], p[1][0])
+        if p[1] == '-' or p[1] == 'no':
+            self.quadruple_gen.check_stack_operand(["-", "no"], sem_cube, self.virtual_mem)
         p[0] = p[1]
+
+    def p_seen_unary(self, p):
+        '''seen_unary : '''
+        self.quadruple_gen.add_operator(p[-1])
+        self.quadruple_gen.add_operand("U", self.virtual_mem.get_constant_address(0, 'I'))
 
     # Variables, literals, y llamadas a una función
     def p_fact_constants(self, p):
