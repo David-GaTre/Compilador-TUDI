@@ -19,7 +19,6 @@ reserved = {
     'char': 'CHAR',
     'void': 'VOID',
     'canvas': 'CANVAS',
-    'sprite': 'SPRITE',
     'func': 'FUNC',
     'return': 'RETURN',
     'declare': 'DECLARE',
@@ -29,9 +28,7 @@ reserved = {
     'else': 'ELSE',
     'for': 'FOR',
     'while': 'WHILE',
-    'SetPosition': 'SETPOSITION',
-    'Translate': 'TRANSLATE',
-    'SetControllable': 'SETCONTROLLABLE',
+    'no': 'NOT'
 }
 
 class LexerTudi(object):

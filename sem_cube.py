@@ -2,7 +2,6 @@ INT = 'int'
 FLOAT = 'float'
 CHAR = 'char'
 BOOL = 'bool'
-ARR1D = 'arr1d'
 
 class SemanticCube:
     valid_expressions = {
@@ -45,6 +44,8 @@ class SemanticCube:
         '<=,IB': BOOL,
         'y,IB': BOOL,
         'o,IB': BOOL,
+        # Unary - Int
+        '-,UI': INT,
         # Float - Int
         '+,FI': FLOAT,
         '-,FI': FLOAT,
@@ -84,8 +85,9 @@ class SemanticCube:
         '<=,FB': BOOL,
         'y,FB': BOOL,
         'o,FB': BOOL,
+        # Unary - FLOAT
+        '-,UF': FLOAT,
         # Char - Char
-        '+,CC': ARR1D, # Like a C string
         '>,CC': BOOL,
         '>=,CC': BOOL,
         '==,CC': BOOL,
@@ -133,8 +135,8 @@ class SemanticCube:
         '<=,BB': BOOL,
         'y,BB': BOOL,
         'o,BB': BOOL,
-        # Array1d - Array1d
-        '+,AA': ARR1D
+        # Unary - Bool
+        'no,UB': BOOL,
     }
 
     def create_expression(self, left_operand: str, right_operand: str, operator: str):

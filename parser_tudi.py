@@ -196,8 +196,7 @@ class ParserTudi(object):
                      | while_loop
                      | conditional
                      | assignment ';'
-                     | return ';'
-                     | call_method ';' '''
+                     | return ';' '''
 
     # Añadir un estatuto más
     def p_statement_prima(self, p):
@@ -331,23 +330,6 @@ class ParserTudi(object):
         self.quadruple_gen.add_quad_from_parser("PARAM", operand, None, f"par{param_counter + 1}")
         self.quadruple_gen.params_stack[-1][1] += 1
 
-    # Llamada a un método, requisitos:
-    # - Los únicos métodos en TUDI pertenecen a una variable de tipo sprite
-    def p_call_method(self, p):
-        '''call_method : id_exp '.' call_method_prima '(' list_args ')' '''
-
-    # Los métodos built-in en TUDI para el tipo de dato sprite:
-    # - SetPosition: Recibe dos floats,
-    #                correspondientes a las coordenadas (x, y)
-    # - Translate: Recibe dos floats,
-    #              desplaza el sprite en las dos dimensiones
-    # - SetControllable: Recibe un bool,
-    #                    define si el sprite puede ser manipulado por las teclas del usuario
-    def p_call_method_prima(self, p):
-        '''call_method_prima : SETPOSITION
-                             | TRANSLATE
-                             | SETCONTROLLABLE '''
-
     # Lista de argumentos (expresiones)
     def p_list_args_func(self, p):
         '''list_args_func : god_exp call_neuro_3 list_args_func_prima
@@ -356,16 +338,6 @@ class ParserTudi(object):
     # Añadir un argumento a la lista de argumentos
     def p_list_args_func_prima(self, p):
         '''list_args_func_prima : ',' god_exp call_neuro_3 list_args_func_prima
-                           | empty'''
-
-    # Lista de argumentos (expresiones)
-    def p_list_args(self, p):
-        '''list_args : god_exp seen_god_exp list_args_prima
-                     | empty'''
-
-    # Añadir un argumento a la lista de argumentos
-    def p_list_args_prima(self, p):
-        '''list_args_prima : ',' god_exp seen_god_exp list_args_prima
                            | empty'''
 
     # Ciclo for loop (C/C++ style)
@@ -512,8 +484,7 @@ class ParserTudi(object):
         '''type : INT type_dims
                 | FLOAT type_dims
                 | BOOLEAN type_dims
-                | CHAR type_dims
-                | SPRITE type_dims'''
+                | CHAR type_dims'''
         # TODO: Implementar arreglos correctamente
         # if p[2] is not None:
         #     p[0] = "-".join([p[1], p[2]])
@@ -558,12 +529,6 @@ class ParserTudi(object):
     def p_god_exp(self, p):
         '''god_exp : super_exp seen_super_exp god_exp_prima'''
         self.quadruple_gen.finish_expression(sem_cube, self.virtual_mem)
-
-    def p_seen_god_exp(self, p):
-        '''seen_god_exp : '''
-        # TODO: Hacer quads de funciones, asignación, etc.
-        # Por el momento eliminar la expresion de los stacks
-        self.quadruple_gen.pop_operand()
 
     def p_seen_super_exp(self, p):
         '''seen_super_exp : '''
@@ -618,12 +583,21 @@ class ParserTudi(object):
     # - Llamadas a una función (lo que retorna)
     def p_fact(self, p):
         '''fact : '(' seen_fact_open god_exp ')' seen_fact_close
-                | fact_constants '''
+                | fact_constants
+                | '-' seen_unary fact
+                | NOT seen_unary fact '''
 
         if len(p) == 2:
             # (Type, operand)
             self.quadruple_gen.add_operand(p[1][1], p[1][0])
+        if p[1] == '-' or p[1] == 'no':
+            self.quadruple_gen.check_stack_operand(["-", "no"], sem_cube, self.virtual_mem)
         p[0] = p[1]
+
+    def p_seen_unary(self, p):
+        '''seen_unary : '''
+        self.quadruple_gen.add_operator(p[-1])
+        self.quadruple_gen.add_operand("U", self.virtual_mem.get_constant_address(0, 'I'))
 
     # Variables, literals, y llamadas a una función
     def p_fact_constants(self, p):
