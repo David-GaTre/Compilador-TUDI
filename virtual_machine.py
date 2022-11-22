@@ -2,7 +2,7 @@ import argparse
 
 from collections import deque
 from lexer import LexerTudi
-from memory import GLOBAL_START, LOCAL_START, TEMP_START, TEMP_POINTER, CONST_START, CONST_LIMIT, Memory, FunctionMemory, get_type_by_address
+from memory import GLOBAL_START, LOCAL_START, TEMP_START, TEMP_POINTER, CONST_START, CONST_LIMIT, FunctionMemory, get_type_by_address
 from parser_tudi import ParserTudi
 
 class VirtualMachine():

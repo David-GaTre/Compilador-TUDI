@@ -813,4 +813,4 @@ class ParserTudi(object):
         return self.func_dir
 
     def get_constant_table(self):
-        return {v.address: v.value for k, v in self.virtual_mem.constant_table.items()}
+        return {v: int(k) for k, v in self.virtual_mem.constant_table.items()}
