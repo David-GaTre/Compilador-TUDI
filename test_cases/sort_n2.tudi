@@ -55,4 +55,6 @@ func Start : void () {
     }
 }
 
-func Update : void () {}
+func Update : void () {
+    game_over;
+}

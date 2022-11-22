@@ -45,4 +45,5 @@ func Update : void () {
         int[1] row_local;
         int[1, 2] inventory_local;
     }
+    game_over;
 }

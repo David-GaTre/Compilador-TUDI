@@ -32,4 +32,6 @@ func Start : void () {
     Print(res);
 }
 
-func Update : void () {}
+func Update : void () {
+    game_over;
+}
