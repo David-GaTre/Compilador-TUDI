@@ -86,7 +86,7 @@ class LexerTudi(object):
     # Expresión regular para identificar los literales string
     # Incluye caracteres alfanuméricos, espacios y caracteres específicos
     def t_STRING_LITERAL(self, t):
-        r'\"(\w|\s|\n|[\\\-*+/():=\[\],:<>])+\"'
+        r'\"(\w|\s|\n|[\\\-*+/():=\[\],:<>.])+\"'
         return t
 
     # Expresión regular para identificar los literales flotantes

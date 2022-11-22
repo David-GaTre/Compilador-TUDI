@@ -6,13 +6,13 @@ from memory import GLOBAL_START, LOCAL_START, TEMP_START, TEMP_POINTER, CONST_ST
 from parser_tudi import ParserTudi
 
 class VirtualMachine():
-    def __init__(self, input) -> None:
+    def __init__(self, input, verbose=False) -> None:
         # Init lexer
         self.lexer = LexerTudi()
         self.lexer.build()
         # Init parser
         self.parser = ParserTudi()
-        self.parser.build(self.lexer)
+        self.parser.build(self.lexer, verbose)
         # Parse input
         self.parser.parse(input)
 
@@ -208,6 +208,23 @@ class VirtualMachine():
             # Checa que esté dentro del rango [0, upper_bound)
             if not (0 <= index and index < upper_bound):
                 raise Exception(f"Index out of bounds")
+        elif quadruple.operator == 'CAST':
+            # --------------------------- CAST FUNCTIONS ---------------------------
+            return_address = quadruple.right_operand
+            try:
+                temp = self.get_address_value(quadruple.temp)
+            except:
+                temp = quadruple.temp.replace('"', '')
+
+            if quadruple.left_operand == 'int':
+                value = int(temp)
+                self.set_address_value(return_address, value)
+            elif quadruple.left_operand == 'float':
+                value = float(temp)
+                self.set_address_value(return_address, value)
+            elif quadruple.left_operand == 'bool':
+                value = bool(temp)
+                self.set_address_value(return_address, value)
         else:
             print("Not yet handled")
 
@@ -236,11 +253,12 @@ class VirtualMachine():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog="TUDI-VM", description="Virtual machine to parse and execute the TUDI programming language")
     parser.add_argument("filename", help="Filename with a TUDI program to parse and execute.")
+    parser.add_argument("--verbose", action="store_true", help="Print all the details of the parsing phase.")
     args = parser.parse_args()
 
     f = open(args.filename, 'r')
     data = f.read()
     f.close()
 
-    tudi = VirtualMachine(data)
+    tudi = VirtualMachine(data, args.verbose)
     tudi.start_machine()

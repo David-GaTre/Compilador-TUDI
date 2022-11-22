@@ -226,10 +226,12 @@ class ParserTudi(object):
     def p_io_func(self, p):
         '''io_func : print
                    | read '''
+        p[0] = [p[1], "V"]
 
     def p_print(self, p):
         '''print : PRINT '(' STRING_LITERAL ')'
                  | PRINT '(' god_exp ')' '''
+        p[0] = p[1]
         # Pop resultado de expresión
         if p[3] is None:
             _, output = self.quadruple_gen.pop_operand()
@@ -240,6 +242,7 @@ class ParserTudi(object):
 
     def p_read(self, p):
         '''read : READ '(' id_exp ')' '''
+        p[0] = p[1]
         self.quadruple_gen.add_quad_from_parser(p[1], None, None, p[3][0])
 
     # Funciones built-in de cast en TUDI:
@@ -249,14 +252,26 @@ class ParserTudi(object):
         '''cast_func : INT cast_func_prima
                      | FLOAT cast_func_prima
                      | BOOLEAN cast_func_prima'''
-        # TODO: Unfinished. Finish later
-        p[0] = p[1]
+        func = {'name': p[1]} | self.func_dir.find_function(p[1])
+
+        self.quadruple_gen.add_quad_from_parser("CAST", p[1], func["return_address"], p[2])
+        t_type = type_to_char[p[1]]
+
+        t = self.virtual_mem.get_new_temporal(t_type)
+        self.quadruple_gen.add_assignment(t, func["return_address"])
+
+        p[0] = [t, t_type]
 
     # El argumento posible de una función de cast:
     # - String literal o arreglo de chars
     def p_cast_func_prima(self, p):
         '''cast_func_prima : '(' STRING_LITERAL ')'
-                           | '(' god_exp seen_god_exp ')' '''
+                           | '(' god_exp ')' '''
+        if p[2] is None:
+            _, output = self.quadruple_gen.pop_operand()
+        else:
+            output = p[2]
+        p[0] = output
 
     # Llamada a una función
     def p_call_func(self, p):
@@ -278,16 +293,8 @@ class ParserTudi(object):
                 p[0] = [t, type_to_char[func['return_type']], p[0]]
             else:
                 p[0] = [func["name"], type_to_char[func['return_type']], p[0]] # Dummy value in the meantime
-        elif p[1] == 'Read':
-            p[0] = [p[1], 'C', p[0]] # Dummy value and type in the meantime
-        elif p[1] == 'int':
-            p[0] = [p[1], 'I', p[0]] # Dummy value in the meantime
-        elif p[1] == 'float':
-            p[0] = [p[1], 'F', p[0]] # Dummy value in the meantime
-        elif p[1] == 'bool':
-            p[0] = [p[1], 'B', p[0]] # Dummy value in the meantime
         else:
-            p[0] = [p[1], 'V', p[0]] # Dummy value in the meantime
+            p[0] = p[1]
 
     def p_call_neuro_1(self, p):
         '''call_neuro_1 : '''
@@ -811,6 +818,12 @@ class ParserTudi(object):
         self.quadruple_gen = QuadrupleGenerator()
         self.virtual_mem = VirtualMemory()
         self.verbose = verbose
+
+        # Built-in function with parametric polymorphism
+        for func in ["int", "float", "bool"]:
+            self.func_dir.add_function(func, func, None)
+            mem_address = self.virtual_mem.get_new_global(type_to_char[func])
+            self.func_dir.add_return_address(func, mem_address)
 
         self.lexer = lexer
         self.parser = yacc.yacc(module=self, **kwargs)
