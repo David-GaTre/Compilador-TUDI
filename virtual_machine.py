@@ -233,6 +233,19 @@ class VirtualMachine():
             elif quadruple.left_operand == 'bool':
                 value = bool(temp)
                 self.set_address_value(return_address, value)
+        elif quadruple.operator == 'INIT_GAME':
+            pygame.init()
+            self.game_window = pygame.display.set_mode((self.window_x, self.window_y))
+            pygame.display.set_caption(self.game_name)
+        elif quadruple.operator == 'GAME_OVER':
+            self.counter = len(self.quadruples) - 2
+        elif quadruple.operator == 'END_PROGRAM':
+            print("\nThank you for using TUDI :)")
+        elif quadruple.operator == 'GAME':
+            self.game_name = quadruple.temp
+        elif quadruple.operator == 'CANVAS':
+            self.window_x = self.get_address_value(quadruple.left_operand)
+            self.window_y = self.get_address_value(quadruple.right_operand)
         else:
             print("Not yet handled")
 
