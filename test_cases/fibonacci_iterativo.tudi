@@ -25,7 +25,7 @@ func Start : void () {
 
     x = 0;
     while (x <= 0) {
-        Print("Calcula el fibonacci N (N >= 1):");
+        Print("Calcula el fibonacci N (N >= 1): ");
         Read(x);
     }
 

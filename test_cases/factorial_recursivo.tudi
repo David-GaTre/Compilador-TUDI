@@ -17,7 +17,7 @@ func Start : void () {
 
     x = 0 - 1;
     while (x < 0) {
-        Print("Calcula el factorial de N (N >= 0):");
+        Print("Calcula el factorial de N (N >= 0): ");
         Read(x);
     }
 
