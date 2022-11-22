@@ -54,6 +54,8 @@ class ParserTudi(object):
     def p_game_vars(self, p):
         '''game_vars : block_vars
                      | empty'''
+        self.quadruple_gen.add_quad_from_parser("GAME", None, None, p[-8])
+        self.quadruple_gen.add_quad_from_parser("CANVAS", p[-4][0], p[-2][0], None)
         self.quadruple_gen.add_quad_from_parser("GOTO", None, None, None)
 
     # Definición de funciones:
