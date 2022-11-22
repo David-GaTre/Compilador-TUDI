@@ -24,7 +24,7 @@ class ParserTudi(object):
     # - Definición de funciones
     def p_game(self, p):
         '''game : GAME ID ';' CANVAS ASSIGN_OP int ',' int ';' game_vars game_funcs'''
-        self.quadruple_gen.quadruples[0].temp = len(self.quadruple_gen.quadruples)+1
+        self.quadruple_gen.quadruples[0].temp = self.quadruple_gen.count_q
         self.quadruple_gen.add_quad_from_parser("ERA", None, None, 'Start')
         self.quadruple_gen.add_quad_from_parser("GOSUB", None, None, 'Start')
         self.quadruple_gen.add_quad_from_parser("ERA", None, None, 'Update')
@@ -145,6 +145,7 @@ class ParserTudi(object):
     #   la función que está siendo ejecutada constantemente (loop)
     def p_func_update(self, p):
         '''func_update : FUNC UPDATE ':' VOID seen_dec_func '(' ')' '{' block_vars_code '}' '''
+        self.quadruple_gen.add_quad_from_parser("GOTO", None, None, self.func_dir.find_function('Update')["start"])
         self.quadruple_gen.add_quad_from_parser("ENDFUNC", None, None, None)
         self.func_dir.add_resources(p[2], self.virtual_mem.get_temps_and_locals())
         self.func_dir.clear_var_table(p[2])
