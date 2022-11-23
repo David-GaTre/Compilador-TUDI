@@ -1,4 +1,17 @@
 # TUDI
+
+## QUE SE NECESITA INSTALAR
+Tenemos que tener python3 ya instalado en nuestra máquina. Luego de esto solo necesitamos instalar el paquete de PyGame que viene en el documento de requerimientos.
+
+`$ pip install -r requirements.txt`
+
+## COMO CORRER UN PROGRAMA
+`$ python virtual_machine.py [NOMBRE DE ARCHIVO]`
+
+Ejemplo:
+`$ python virtual_machine.py test_cases/multiplicacion_matriz.tudi`
+
+
 ## Avance 7
 Creación de cuádruplos de arreglos y de funciones I/O.
 
