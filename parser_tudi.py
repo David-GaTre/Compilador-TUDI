@@ -131,7 +131,7 @@ class ParserTudi(object):
             return_type = p[4][0]
         self.quadruple_gen.add_quad_from_parser("ENDFUNC", None, None, return_type)
         self.func_dir.add_resources(p[2], self.virtual_mem.get_temps_and_locals())
-        # self.func_dir.clear_var_table(p[2])
+        self.func_dir.clear_var_table(p[2])
         self.virtual_mem.reset_temps_and_locals()
 
     # Definición de función Start de TUDI:
@@ -141,7 +141,7 @@ class ParserTudi(object):
         '''func_start : FUNC START ':' VOID seen_dec_func '(' ')' '{' block_vars_code '}' '''
         self.quadruple_gen.add_quad_from_parser("ENDFUNC", None, None, None)
         self.func_dir.add_resources(p[2], self.virtual_mem.get_temps_and_locals())
-        # self.func_dir.clear_var_table(p[2])
+        self.func_dir.clear_var_table(p[2])
         self.virtual_mem.reset_temps_and_locals()
 
     # Definición de función Update de TUDI:
@@ -152,7 +152,7 @@ class ParserTudi(object):
         self.quadruple_gen.add_quad_from_parser("GOTO", None, None, self.func_dir.find_function('Update')["start"])
         self.quadruple_gen.add_quad_from_parser("ENDFUNC", None, None, None)
         self.func_dir.add_resources(p[2], self.virtual_mem.get_temps_and_locals())
-        # self.func_dir.clear_var_table(p[2])
+        self.func_dir.clear_var_table(p[2])
         self.virtual_mem.reset_temps_and_locals()
 
     # Lista de parámetros de una función
