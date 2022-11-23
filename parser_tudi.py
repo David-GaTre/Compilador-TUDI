@@ -988,7 +988,7 @@ class ParserTudi(object):
 
         # Built-in function with parametric polymorphism
         for func in ["int", "float", "bool"]:
-            self.func_dir.add_function(func, func, None)
+            self.func_dir.add_function(func, [func, [1]], None)
             mem_address = self.virtual_mem.get_new_global(type_to_char[func])
             self.func_dir.add_return_address(func, mem_address)
 
