@@ -128,4 +128,6 @@ func Start : void () {
     print_vec(vec, len);
 }
 
-func Update : void () {}
+func Update : void () {
+    game_over;
+}

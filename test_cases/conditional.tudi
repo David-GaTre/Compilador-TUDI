@@ -63,4 +63,6 @@ func Update : void () {
     }
 
     count = count + 0.5;
+
+    game_over;
 }

@@ -28,6 +28,15 @@ reserved = {
     'else': 'ELSE',
     'for': 'FOR',
     'while': 'WHILE',
+    'init_game': 'INIT_GAME',
+    'random': 'RANDOM',
+    'game_over': 'GAME_OVER',
+    'write_screen': 'WRITE_SCREEN',
+    'get_event': 'GET_EVENT',
+    'draw_rect': 'DRAW_RECT',
+    'set_fill': 'SET_FILL',
+    'tick': 'TICK',
+    'update_game': 'UPDATE_GAME',
     'no': 'NOT'
 }
 

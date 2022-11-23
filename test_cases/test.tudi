@@ -105,4 +105,5 @@ func Update : void () {
     } else if (vector[0] != 2) {
         cond = false;
     } 
+    game_over;
 }

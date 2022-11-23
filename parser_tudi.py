@@ -24,11 +24,13 @@ class ParserTudi(object):
     # - Definición de funciones
     def p_game(self, p):
         '''game : GAME ID ';' CANVAS ASSIGN_OP int ',' int ';' game_vars game_funcs'''
-        self.quadruple_gen.quadruples[0].temp = self.quadruple_gen.count_q
+        self.quadruple_gen.quadruples[2].temp = self.quadruple_gen.count_q
         self.quadruple_gen.add_quad_from_parser("ERA", None, None, 'Start')
         self.quadruple_gen.add_quad_from_parser("GOSUB", None, None, 'Start')
         self.quadruple_gen.add_quad_from_parser("ERA", None, None, 'Update')
         self.quadruple_gen.add_quad_from_parser("GOSUB", None, None, 'Update')
+        self.quadruple_gen.add_quad_from_parser("END_PROGRAM", None, None, None)
+
         p[0] = "Aceptado"
         if self.verbose:
             print("Todo valido")
@@ -55,6 +57,8 @@ class ParserTudi(object):
     def p_game_vars(self, p):
         '''game_vars : block_vars
                      | empty'''
+        self.quadruple_gen.add_quad_from_parser("GAME", None, None, p[-8])
+        self.quadruple_gen.add_quad_from_parser("CANVAS", p[-4][0], p[-2][0], None)
         self.quadruple_gen.add_quad_from_parser("GOTO", None, None, None)
 
     # Definición de funciones:
@@ -190,6 +194,65 @@ class ParserTudi(object):
         '''block_code : statement statement_prima
                       | empty'''
 
+    def p_pygame_func(self, p):
+        '''pygame_func : init_game
+                       | game_over
+                       | write_screen
+                       | draw_rect
+                       | set_fill 
+                       | update_game
+                       | tick'''
+        p[0] = p[1]
+    
+    def p_init_game(self, p):
+        '''init_game : INIT_GAME'''
+        self.quadruple_gen.add_quad_from_parser("INIT_GAME", None, None, None)
+        p[0] = p[1]
+
+    def p_game_over(self, p):
+        '''game_over : GAME_OVER '''
+        self.quadruple_gen.add_quad_from_parser("GAME_OVER", None, None, None)
+        p[0] = p[1]
+
+    def p_write_screen(self, p):
+        '''write_screen : WRITE_SCREEN '(' id_exp ')' '''
+        self.quadruple_gen.add_quad_from_parser("WRITE_SCREEN", None, None, p[3][0])
+        p[0] = p[1]
+
+    def p_draw_rect(self, p):
+        '''draw_rect : DRAW_RECT '(' STRING_LITERAL ',' god_exp ',' god_exp ',' god_exp ',' god_exp ')' '''
+        color = p[3]
+        t_type1, operand1 = self.quadruple_gen.pop_operand()
+        t_type2, operand2 = self.quadruple_gen.pop_operand()
+        t_type3, operand3 = self.quadruple_gen.pop_operand()
+        t_type4, operand4 = self.quadruple_gen.pop_operand()
+        
+        if t_type1 != 'I' or t_type2 != 'I' or t_type3 != 'I' or t_type4 != 'I':
+            raise Exception("Arguments must be all integers besides the first.")
+        
+        self.quadruple_gen.add_quad_from_parser("DRAW_RECT", None, None, [color, operand4, operand3, operand2, operand1] )
+        p[0] = p[1]
+
+    def p_set_fill(self, p):
+        '''set_fill : SET_FILL '(' STRING_LITERAL ')' '''
+        self.quadruple_gen.add_quad_from_parser("SET_FILL", None, None, p[3])
+        p[0] = p[1]
+
+    def p_update_game(self, p):
+        '''update_game : UPDATE_GAME '''
+        self.quadruple_gen.add_quad_from_parser("UPDATE_GAME", None, None, None)
+        p[0] = p[1]
+
+    def p_tick(self, p):
+        '''tick : TICK '(' god_exp ')' '''
+        t_type1, operand1 = self.quadruple_gen.pop_operand()
+
+        if t_type1 != 'I':
+            raise Exception("Tick time must be int")
+        
+        self.quadruple_gen.add_quad_from_parser("TICK", None, None, operand1)
+        p[0] = p[1]
+
     # Un estatuto puede ser:
     # - Llamada a una función o métodos
     # - Ciclos o condicionales
@@ -201,7 +264,8 @@ class ParserTudi(object):
                      | while_loop
                      | conditional
                      | assignment ';'
-                     | return ';' '''
+                     | return ';'
+                     | pygame_func ';' '''
 
     # Añadir un estatuto más
     def p_statement_prima(self, p):
@@ -309,11 +373,21 @@ class ParserTudi(object):
             output = p[2]
         p[0] = output
 
+    def p_pygame_func_call(self, p):
+        '''pygame_func_call : GET_EVENT '(' id_exp ')'
+                            | RANDOM '(' int ',' int  ',' id_exp ')' '''
+        if len(p) == 5:
+            self.quadruple_gen.add_quad_from_parser("GET_EVENT", None, None, p[3][0])
+        if len(p) == 9:
+            self.quadruple_gen.add_quad_from_parser("RANDOM", p[3][0], p[5][0], p[7][0])
+        p[0] = [p[1], 'V']
+
     # Llamada a una función
     def p_call_func(self, p):
         '''call_func : ID call_neuro_1 '(' call_neuro_2 seen_fact_open list_args_func ')' seen_fact_close
                      | io_func
-                     | cast_func'''
+                     | cast_func
+                     | pygame_func_call'''
         if len(p) > 2:
             # Verifica que se pasaron la cantidad necesaria de parámetros
             func, param_counter = self.quadruple_gen.params_stack.pop()

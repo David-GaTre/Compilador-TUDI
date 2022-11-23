@@ -97,4 +97,6 @@ func Start : void () {
     print_mat(mat_res, m, p);
 }
 
-func Update : void () {}
+func Update : void () {
+    game_over;
+}

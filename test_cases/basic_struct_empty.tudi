@@ -13,4 +13,5 @@ func Start : void () {
 
 func Update : void () {
     declare {}
+    game_over;
 }
