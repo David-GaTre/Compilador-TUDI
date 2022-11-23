@@ -56,10 +56,18 @@ class FunctionsDirectory:
         if func_name not in self.directory:
             return False
         
-        if not self.add_variable(func_name, var_name, var_type, mem, dims):
+        if not self.add_variable(func_name, var_name, var_type, mem, dims[1], dims[0]):
             return False
 
-        self.directory[func_name]['params'].append((var_type, var_name, mem, dims))
+        dims_params = [dims[0]]
+        if dims[1] is not None:
+            for dim in dims[1]:
+                dims_params.append(dim[0])
+        else:
+            dims_params.append(dims[1])
+        dims_params = tuple(dims_params)
+
+        self.directory[func_name]['params'].append((var_type, var_name, mem, dims_params))
         return True
 
     def add_variable(self, func_name: str, var_name: str, var_type: str, mem: int, dims: List[Tuple], length=1) -> bool:

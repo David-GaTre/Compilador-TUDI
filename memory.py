@@ -29,11 +29,12 @@ CONST_START = 60000
 CONST_LIMIT = 80000 # end of memory
 
 class FunctionMemory():
-    def __init__(self, resources, params_sequence, start, return_address):
+    def __init__(self, resources, params_sequence, start, return_address, return_length):
         self.memory_map = self._create_memory_map(resources)
         self.params_sequence = params_sequence
         self.start = start
         self.return_address = return_address
+        self.return_length = return_length
 
     def _create_memory_map(self, resources):
         memory_map = dict()

@@ -89,8 +89,8 @@ class QuadrupleGenerator():
             self.operand_stack.append(t)
             self.type_stack.append(result_t)
 
-    def add_assignment(self, var_id, var_val):
-        self.quadruples.append(Quadruple(self.count_q, '=', var_val, None, var_id))
+    def add_assignment(self, var_id, var_val, length=1):
+        self.quadruples.append(Quadruple(self.count_q, '=', var_val, length, var_id))
         self.count_q += 1
 
     def print_quadruples(self):
