@@ -1,11 +1,23 @@
 game find_vec;
 canvas = 10, 10;
 
-declare {
-    int[10] vec;
+func create_vec : int[10] (int len) {
+    declare {
+        int[10] new_vec;
+        int i;
+    }
+
+    for (i = 0; i < len; i = i + 1) {
+        Print("Vec[");
+        Print(i);
+        Print("]: ");
+        Read(new_vec[i]);
+    }
+
+    return new_vec;
 }
 
-func find : int (int value, int len) {
+func find : int (int[10] vec, int len, int value) {
     declare {
         int i;
     }
@@ -16,41 +28,38 @@ func find : int (int value, int len) {
         }
     }
 
-    return 0 - 1;
+    return -1;
 }
 
 func Start : void () {
     declare {
+        int[10] vec;
         int len, idx, val;
         int i;
     }
 
     len = 0;
-    while (len <= 0 o len > 10) {
+    while (no (0 < len y len <= 10)) {
         Print("Capacidad de tu arreglo (0 < N <= 10): ");
         Read(len);
     }
 
     Print("Rellena tu arreglo:\n");
-    for (i = 0; i < len; i = i + 1) {
-        Print("Vec[");
-        Print(i);
-        Print("]: ");
-        Read(vec[i]);
-    }
+    vec = create_vec(len);
 
     Print("Elemento a buscar: ");
     Read(val);
 
     Print("Buscando ando\n");
-    idx = find(val, len);
+    idx = find(vec, len, val);
 
-    if (idx >= 0) {
+    if (idx != -1) {
         Print("Valor encontrado en (0-based): ");
         Print(idx);
     } else {
         Print("No se encontro el valor en el vector");
     }
+    Print("\n");
 }
 
 func Update : void () {}
