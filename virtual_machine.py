@@ -276,9 +276,9 @@ class VirtualMachine():
             pygame.display.update() 
         elif quadruple.operator == 'TICK':
             temp_val = self.get_address_value(quadruple.temp)
-            self.fps.tick( ) 
+            self.fps.tick(temp_val) 
         elif quadruple.operator == 'GET_EVENT':
-            temp_val = 0
+            temp_val = -1
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_UP:
