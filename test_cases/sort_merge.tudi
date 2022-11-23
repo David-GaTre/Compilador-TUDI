@@ -1,0 +1,131 @@
+game sort_n2;
+canvas = 10, 10;
+
+func create_vec : int[10] (int len) {
+    declare {
+        int[10] new_vec;
+        int i;
+    }
+
+    for (i = 0; i < len; i = i + 1) {
+        Print("Vec[");
+        Print(i);
+        Print("]: ");
+        Read(new_vec[i]);
+    }
+
+    return new_vec;
+}
+
+func print_vec : void (int[10] vec, int len) {
+    declare {
+        int i;
+    }
+
+    for (i = 0; i < len; i = i + 1) {
+        Print("Vec[");
+        Print(i);
+        Print("]: ");
+        Print(vec[i]);
+        Print("\n");
+    }
+}
+
+func merge : int[10] (int[10] vec, int l, int m, int r) {
+    declare {
+        int[10] new_vec, left_vec, right_vec;
+        int k, n1, n2;
+        int i, j;
+    }
+
+    n1 = m - l + 1;
+    n2 =  r - m;
+
+    for (i = 0; i < n1; i = i + 1) {
+        left_vec[i] = vec[l + i];
+    }
+    for (j = 0; j < n2; j = j + 1) {
+        right_vec[j] = vec[m + 1 + j];
+    }
+ 
+    i = 0;
+    j = 0;
+    k = l;
+     
+    while (i < n1 y j < n2)
+    {
+        if (left_vec[i] <= right_vec[j]) {
+            new_vec[k] = left_vec[i];
+            i = i + 1;
+        } else {
+            new_vec[k] = right_vec[j];
+            j = j + 1;
+        }
+        k = k + 1;
+    }
+ 
+    while (i < n1) {
+        new_vec[k] = left_vec[i];
+        i = i + 1;
+        k = k + 1;
+    }
+ 
+    while (j < n2)
+    {
+        new_vec[k] = right_vec[j];
+        j = j + 1;
+        k = k + 1;
+    }
+
+    return new_vec;
+}
+
+func merge_sort : int[10] (int[10] vec, int l, int r) {
+    declare {
+        int mid, i;
+        int[10] left_vec, right_vec, new_vec;
+    }
+
+    if (l < r) {
+        mid = int(l + (r - l) / 2);
+        left_vec = merge_sort(vec, l, mid);
+        right_vec = merge_sort(vec, mid + 1, r);
+
+        for (i = 0; i <= mid; i = i + 1) {
+            vec[i] = left_vec[i];
+        }
+        for (i = mid + 1; i <= r; i = i + 1) {
+            vec[i] = right_vec[i];
+        }
+
+        new_vec = merge(vec, l, mid, r);
+        return new_vec;
+    }
+
+    return vec;
+}
+
+func Start : void () {
+    declare {
+        int[10] vec;
+        int len;
+        int i;
+    }
+
+    len = 0;
+    while (len <= 0 o len > 10) {
+        Print("Capacidad de tu arreglo (0 < N <= 10): ");
+        Read(len);
+    }
+
+    Print("Rellena tu arreglo:\n");
+    vec = create_vec(len);
+
+    Print("Sorteando ando\n");
+    vec = merge_sort(vec, 0, len - 1);
+
+    Print("Resultado del sort:\n");
+    print_vec(vec, len);
+}
+
+func Update : void () {}

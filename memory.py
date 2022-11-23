@@ -28,23 +28,13 @@ TEMP_START = 40000
 CONST_START = 60000
 CONST_LIMIT = 80000 # end of memory
 
-class Memory():
-    def __init__(self, address, value):
-        self.address = address
-        self.value= value
-
-    def __str__(self):
-        return f'Address: {self.address}, Value: {self.value}\n'
-
-    def __repr__(self):
-        return f'Address: {self.address}, Value: {self.value}\n'
-
 class FunctionMemory():
-    def __init__(self, resources, params_sequence, start, return_address):
+    def __init__(self, resources, params_sequence, start, return_address, return_length):
         self.memory_map = self._create_memory_map(resources)
         self.params_sequence = params_sequence
         self.start = start
         self.return_address = return_address
+        self.return_length = return_length
 
     def _create_memory_map(self, resources):
         memory_map = dict()
@@ -258,10 +248,9 @@ class VirtualMemory():
     # Usar para tabla de tabla de constantes en un diccionario
     def get_constant_address(self, val: str, t_type: str, increment: int = 1) -> int:
         if str(val) in self.constant_table:
-            return self.constant_table[str(val)].address
+            return self.constant_table[str(val)]
         address = self.get_new_constant(t_type, increment)
-        new_v = Memory(address, val)
-        self.constant_table[str(val)] = new_v
+        self.constant_table[str(val)] = address
         return address
 
 def get_type_by_address(address):

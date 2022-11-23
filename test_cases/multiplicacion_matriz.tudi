@@ -1,14 +1,67 @@
 game multiplicacion_matriz;
 canvas = 10, 10;
 
-declare {
-    int[10, 10] mat_a, mat_b, mat_res;
+func print_mat : void (int[10, 10] mat, int m, int n) {
+    declare {
+        int i, j;
+    }
+
+    for (i = 0; i < m; i = i + 1) {
+        for (j = 0; j < n; j = j + 1) {
+            Print("Mat[");
+            Print(i);
+            Print(", ");
+            Print(j);
+            Print("]: ");
+            Print(mat[i, j]);
+            Print("\n");
+        }
+    }
+}
+
+func create_mat : int[10, 10] (int m, int n) {
+    declare {
+        int[10, 10] new_mat;
+        int i, j;
+    }
+
+    for (i = 0; i < m; i = i + 1) {
+        for (j = 0; j < n; j = j + 1) {
+            Print("Mat[");
+            Print(i);
+            Print(", ");
+            Print(j);
+            Print("]: ");
+            Read(new_mat[i, j]);
+        }
+    }
+
+    return new_mat;
+}
+
+
+func mat_mul : int[10, 10] (int[10, 10] mat_a, int[10, 10] mat_b, int m, int p, int n) {
+    declare {
+        int[10, 10] mat_c;
+        int i, j, k;
+    }
+
+    for (i = 0; i < m; i = i + 1) {
+        for (j = 0; j < p; j = j + 1) {
+            for (k = 0; k < n; k = k + 1) {
+                mat_c[i, j] = mat_c[i, j] + mat_a[i, k] * mat_b[k, j];
+            }
+        }
+    }
+
+    return mat_c;
 }
 
 func Start : void () {
     declare {
         int m, n, p;
         int i, j, k;
+        int[10, 10] mat_a, mat_b, mat_res;
     }
 
     Print("Multiplicación de matrices -> M(m x n) * M(n x p) = M(m x p)\n");
@@ -32,51 +85,16 @@ func Start : void () {
     }
 
     Print("Rellena matriz A:\n");
-    for (i = 0; i < m; i = i + 1) {
-        for (j = 0; j < n; j = j + 1) {
-            Print("MatA [");
-            Print(i);
-            Print(", ");
-            Print(j);
-            Print("]: ");
-            Read(mat_a[i, j]);
-        }
-    }
+    mat_a = create_mat(m, n);
 
     Print("Rellena matriz B:\n");
-    for (i = 0; i < n; i = i + 1) {
-        for (j = 0; j < p; j = j + 1) {
-            Print("MatB[");
-            Print(i);
-            Print(", ");
-            Print(j);
-            Print("]: ");
-            Read(mat_b[i, j]);
-        }
-    }
+    mat_b = create_mat(n, p);
 
     Print("Multiplicando matrices ando\n");
-    for (i = 0; i < m; i = i + 1) {
-        for (j = 0; j < p; j = j + 1) {
-            for (k = 0; k < n; k = k + 1) {
-                mat_res[i, j] = mat_res[i, j] + mat_a[i, k] * mat_b[k, j];
-            }
-        }
-    }
-
+    mat_res = mat_mul(mat_a, mat_b, m, p, n);
 
     Print("Resultado de MatA x MatB:\n");
-    for (i = 0; i < m; i = i + 1) {
-        for (j = 0; j < p; j = j + 1) {
-            Print("MatC[");
-            Print(i);
-            Print(", ");
-            Print(j);
-            Print("]: ");
-            Print(mat_res[i, j]);
-            Print("\n");
-        }
-    }
+    print_mat(mat_res, m, p);
 }
 
 func Update : void () {}

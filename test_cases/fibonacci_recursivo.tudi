@@ -24,6 +24,7 @@ func Start : void () {
     Print("Resultado: ");
     res = fibonacci(x);
     Print(res);
+    Print("\n");
 }
 
 func Update : void () {}
