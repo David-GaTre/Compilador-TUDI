@@ -5,7 +5,7 @@ import random
 
 from collections import deque
 from lexer import LexerTudi
-from memory import GLOBAL_START, LOCAL_START, TEMP_START, TEMP_POINTER, CONST_START, CONST_LIMIT, Memory, FunctionMemory, get_type_by_address
+from memory import GLOBAL_START, LOCAL_START, TEMP_START, TEMP_POINTER, CONST_START, CONST_LIMIT, FunctionMemory, get_type_by_address
 from parser_tudi import ParserTudi
 
 # Colors for the game
@@ -127,13 +127,16 @@ class VirtualMachine():
             self.set_address_value(quadruple.temp, temp_val)
         elif quadruple.operator == '=':
             # --------------------------- ASSIGNMENT ---------------------------
-            temp_val = self.get_address_value(quadruple.left_operand)
+            length = quadruple.right_operand
+            temp = quadruple.temp
+
             # Resultado es un pointer, entonces
-            if TEMP_POINTER <= quadruple.temp and quadruple.temp < CONST_START:
+            if TEMP_POINTER <= temp and temp < CONST_START:
                 temp = self.curr_func.get_value_by_address(quadruple.temp)
-                self.set_address_value(temp, temp_val)
-                return
-            self.set_address_value(quadruple.temp, temp_val)
+
+            for i in range(length):
+                temp_val = self.get_address_value(quadruple.left_operand + i)
+                self.set_address_value(temp + i, temp_val)
         elif quadruple.operator == 'Read':
             quad_temp = quadruple.temp
             temp_val = input()
@@ -195,22 +198,27 @@ class VirtualMachine():
             # --------------------------- ERA ---------------------------
             # Agregamos al call stack
             func = self.func_dir.find_function(quadruple.temp)
-            new_func = FunctionMemory(func["resources"], func["params"], func["start"], func["return_address"])
+            new_func = FunctionMemory(func["resources"], func["params"], func["start"], func["return_address"], func["return_type"][1][0])
             self.func_call_stack.append(new_func)
         elif quadruple.operator == 'PARAM':
             # --------------------------- PARAM ---------------------------
             # Obtenemos el número de parámetro - 1
             param_idx = int(quadruple.temp[3:]) - 1
             address = self.func_call_stack[-1].params_sequence[param_idx][2]
+            length = self.func_call_stack[-1].params_sequence[param_idx][3][0]
 
-            left_operand = self.get_address_value(quadruple.left_operand)
-            self.func_call_stack[-1].set_value_by_address(address, left_operand)
+            for i in range(length):
+                left_operand = self.get_address_value(quadruple.left_operand + i)
+                self.func_call_stack[-1].set_value_by_address(address + i, left_operand)
         elif quadruple.operator == 'RET':
             # --------------------------- RETURN ---------------------------
             # Obtenemos el número de parámetro - 1
             return_address = self.curr_func.return_address
-            return_value = self.get_address_value(quadruple.temp)
-            self.set_address_value(return_address, return_value)
+            length = self.curr_func.return_length
+
+            for i in range(length):
+                return_value = self.get_address_value(quadruple.temp + i)
+                self.set_address_value(return_address + i, return_value)
 
             self.func_call_stack.pop()
             if len(self.func_call_stack) > 0:

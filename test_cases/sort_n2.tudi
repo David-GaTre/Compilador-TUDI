@@ -1,11 +1,37 @@
 game sort_n2;
 canvas = 10, 10;
 
-declare {
-    int[10] vec;
+func create_vec : int[10] (int len) {
+    declare {
+        int[10] new_vec;
+        int i;
+    }
+
+    for (i = 0; i < len; i = i + 1) {
+        Print("Vec[");
+        Print(i);
+        Print("]: ");
+        Read(new_vec[i]);
+    }
+
+    return new_vec;
 }
 
-func sort : void (int len) {
+func print_vec : void (int[10] vec, int len) {
+    declare {
+        int i;
+    }
+
+    for (i = 0; i < len; i = i + 1) {
+        Print("Vec[");
+        Print(i);
+        Print("]: ");
+        Print(vec[i]);
+        Print("\n");
+    }
+}
+
+func sort : int[10] (int[10] vec, int len) {
     declare {
         int i, j;
         int temp;
@@ -20,10 +46,13 @@ func sort : void (int len) {
             }
         }
     }
+
+    return vec;
 }
 
 func Start : void () {
     declare {
+        int[10] vec;
         int len;
         int i;
     }
@@ -35,24 +64,13 @@ func Start : void () {
     }
 
     Print("Rellena tu arreglo:\n");
-    for (i = 0; i < len; i = i + 1) {
-        Print("Vec[");
-        Print(i);
-        Print("]: ");
-        Read(vec[i]);
-    }
+    vec = create_vec(len);
 
     Print("Sorteando ando\n");
-    sort(len);
+    vec = sort(vec, len);
 
     Print("Resultado del sort:\n");
-    for (i = 0; i < len; i = i + 1) {
-        Print("Vec[");
-        Print(i);
-        Print("]: ");
-        Print(vec[i]);
-        Print("\n");
-    }
+    print_vec(vec, len);
 }
 
 func Update : void () {

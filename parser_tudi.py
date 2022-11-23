@@ -48,6 +48,7 @@ class ParserTudi(object):
 
             print("Constant table:")
             print(self.virtual_mem.constant_table)
+            print(self.inverse_constant_table)
             print()
 
             self.quadruple_gen.print_quadruples()
@@ -95,7 +96,8 @@ class ParserTudi(object):
             # Se guarda la dirección de memoria si es un arreglo,
             # pueste que es la constante que se usará para la dirección base
             if dims is not None:
-                self.virtual_mem.get_constant_address(mem_address, 'I')
+                addr = self.virtual_mem.get_constant_address(mem_address, 'I')
+                self.inverse_constant_table[addr] = mem_address
 
             if not self.func_dir.add_variable(self.last_vars['scope'], var_id.value, self.last_vars['var_type'], mem_address, dims, increment):
                 print(f'Error: Re-declaration of variable \'{var_id.value}\' at line: {var_id.lineno}')
@@ -125,11 +127,11 @@ class ParserTudi(object):
         # el tipo de retorno. Este es usado para detectar en ejecución, que si se llega
         # a un quad así esta función no regreso nada y marcar error.
         return_type = None
-        if isinstance(p[4], list) and p[4][0] != 'void':
+        if p[4][0] != 'void':
             return_type = p[4][0]
         self.quadruple_gen.add_quad_from_parser("ENDFUNC", None, None, return_type)
         self.func_dir.add_resources(p[2], self.virtual_mem.get_temps_and_locals())
-        self.func_dir.clear_var_table(p[2])
+        # self.func_dir.clear_var_table(p[2])
         self.virtual_mem.reset_temps_and_locals()
 
     # Definición de función Start de TUDI:
@@ -139,7 +141,7 @@ class ParserTudi(object):
         '''func_start : FUNC START ':' VOID seen_dec_func '(' ')' '{' block_vars_code '}' '''
         self.quadruple_gen.add_quad_from_parser("ENDFUNC", None, None, None)
         self.func_dir.add_resources(p[2], self.virtual_mem.get_temps_and_locals())
-        self.func_dir.clear_var_table(p[2])
+        # self.func_dir.clear_var_table(p[2])
         self.virtual_mem.reset_temps_and_locals()
 
     # Definición de función Update de TUDI:
@@ -150,7 +152,7 @@ class ParserTudi(object):
         self.quadruple_gen.add_quad_from_parser("GOTO", None, None, self.func_dir.find_function('Update')["start"])
         self.quadruple_gen.add_quad_from_parser("ENDFUNC", None, None, None)
         self.func_dir.add_resources(p[2], self.virtual_mem.get_temps_and_locals())
-        self.func_dir.clear_var_table(p[2])
+        # self.func_dir.clear_var_table(p[2])
         self.virtual_mem.reset_temps_and_locals()
 
     # Lista de parámetros de una función
@@ -169,11 +171,14 @@ class ParserTudi(object):
         '''func_type : type
                      | VOID '''
         if len(p[1]) == 2:
-            p[0] = p[1]
+            dims = [p[1][1][0]]
             if p[1][1][1] is not None:
-                raise Exception(f"Functions return values cannot be arrays")
+                for dim in p[1][1][1]:
+                    dims.append(dim[0])
+                p[1][1] = tuple(dims)
+            p[0] = p[1]
         else:
-            p[0] = [p[1], 0]
+            p[0] = [p[1], [0]]
 
     # Bloque de código con posibles variables, puede incluir:
     # - Bloque de declaración de variables
@@ -270,15 +275,47 @@ class ParserTudi(object):
     # Estatuto de retorno:
     # - Regresa una expresión
     def p_return(self, p):
-        '''return : RETURN god_exp '''
+        '''return : RETURN god_exp ret_neuro_1
+                  | RETURN id_exp ret_neuro_2 '''
+
+    def p_ret_neuro_1(self, p):
+        '''ret_neuro_1 : '''
         # Checar que se está en una función que regresa un valor y que este sea del mismo tipo
         if not self.func_dir.find_function(self.last_vars['scope']):
-            raise Exception(f"Something went wrong... at line: {p.lineno(1)}")
+            raise Exception(f"Something went wrong...")
 
         func = self.func_dir.find_function(self.last_vars['scope'])
         t_type, operand = self.quadruple_gen.pop_operand()
-        if type_to_char[func["return_type"]] != t_type:
-            raise Exception(f"Return expected a value of type {func['return_type']}, but got {char_to_type[t_type]} at line: {p.lineno(1)}")
+        if type_to_char[func["return_type"][0]] != t_type:
+            raise Exception(f"Return expected a value of type {func['return_type'][0]}, but got {char_to_type[t_type]}.")
+
+        # Checar que sean de las mismas dimensiones
+        return_dims = func["return_type"][1][1:]
+        var_dims = []
+        if len(return_dims) != len(var_dims):
+            raise Exception(f"Error: In {self.last_vars['scope']}, return value does not have the same dimensions as the return type.")
+
+        self.quadruple_gen.add_quad_from_parser("RET", None, None, operand)
+
+    def p_ret_neuro_2(self, p):
+        '''ret_neuro_2 : '''
+        # Checar que se está en una función que regresa un valor y que este sea del mismo tipo
+        if not self.func_dir.find_function(self.last_vars['scope']):
+            raise Exception(f"Something went wrong... at line")
+
+        func = self.func_dir.find_function(self.last_vars['scope'])
+        t_type, operand, var_dims = p[-1][1], p[-1][0], p[-1][2]
+        if type_to_char[func["return_type"][0]] != t_type:
+            raise Exception(f"Return expected a value of type {func['return_type'][0]}, but got {char_to_type[t_type]}.")
+
+        # Checar que sean de las mismas dimensiones
+        return_dims = func["return_type"][1][1:]
+        if len(return_dims) != len(var_dims):
+            raise Exception(f"Error: In {self.last_vars['scope']}, return value does not have the same dimensions as the return type.")
+
+        for i, (return_dim, var_dim) in enumerate(zip(return_dims, var_dims)):
+            if return_dim != var_dim[0]:
+                raise Exception(f"Error: In {self.last_vars['scope']}, return value does not have the same dimensions as the return type.")
 
         self.quadruple_gen.add_quad_from_parser("RET", None, None, operand)
 
@@ -323,7 +360,7 @@ class ParserTudi(object):
         t = self.virtual_mem.get_new_temporal(t_type)
         self.quadruple_gen.add_assignment(t, func["return_address"])
 
-        p[0] = [t, t_type]
+        p[0] = [t, t_type, []]
 
     # El argumento posible de una función de cast:
     # - String literal o arreglo de chars
@@ -360,12 +397,12 @@ class ParserTudi(object):
             # Genera GOSUB
             self.quadruple_gen.add_quad_from_parser("GOSUB", None, None, func["name"])
             # Guarda valor si no es void
-            if func['return_type'] != "void":
-                t = self.virtual_mem.get_new_temporal(type_to_char[func['return_type']])
-                self.quadruple_gen.add_assignment(t, func["return_address"])
-                p[0] = [t, type_to_char[func['return_type']], p[0]]
+            if func['return_type'][0] != "void":
+                t = self.virtual_mem.get_new_temporal(type_to_char[func['return_type'][0]], func['return_type'][1][0])
+                self.quadruple_gen.add_assignment(t, func["return_address"], func['return_type'][1][0])
+                p[0] = [t, type_to_char[func['return_type'][0]], func["return_type"][1][1:]]
             else:
-                p[0] = [func["name"], type_to_char[func['return_type']], p[0]] # Dummy value in the meantime
+                p[0] = [func["name"], type_to_char[func['return_type'][0]], []]
         else:
             p[0] = p[1]
 
@@ -374,8 +411,8 @@ class ParserTudi(object):
         # Checa que exista una función definida por el usuario
         # p[-1] es la producción en la que aparece el nombre de la función
         if not self.func_dir.find_function(p[-1]):
-            print(f'Error: Function \'{p[-1]}\' at line {p.lineno(-1)} was not declared.')
-            raise Exception(f'Error: Function \'{p[-1]}\' at line {p.lineno(-1)} was not declared.')
+            print(f'Error: Function \'{p[-1]}\' was not declared.')
+            raise Exception(f'Error: Function \'{p[-1]}\' was not declared.')
         func = {'name': p[-1]} | self.func_dir.find_function(p[-1])
         p[0] = func
 
@@ -404,15 +441,46 @@ class ParserTudi(object):
         self.quadruple_gen.add_quad_from_parser("PARAM", operand, None, f"par{param_counter + 1}")
         self.quadruple_gen.params_stack[-1][1] += 1
 
+    def p_call_neuro_4(self, p):
+        '''call_neuro_4 : '''
+        # Pop
+        t_type, operand, var_dims = p[-1][1], p[-1][0], p[-1][2]
+        # Verifica el parametro
+        func, param_counter = self.quadruple_gen.params_stack[-1]
+
+        if param_counter >= len(func["params"]):
+            print(f"Error: Function {func['name']} expected {len(func['params'])} arguments, but got more than needed.")
+            raise Exception(f"Error: Function {func['name']} expected {len(func['params'])} arguments, but got more than needed.")
+
+        curr_param = func["params"][param_counter]
+        if t_type != type_to_char[curr_param[0]]:
+            print(f"Error: Function {func['name']} expected argument {param_counter + 1} of type {func['params'][param_counter][0]}, but got {char_to_type[t_type]}.")
+            raise Exception(f"Error: Function {func['name']} expected argument {param_counter + 1} of type {func['params'][param_counter][0]}, but got {char_to_type[t_type]}.")
+
+        # Checar que sean de las mismas dimensiones
+        param_dims = curr_param[3][1:]
+        if len(param_dims) != len(var_dims):
+            raise Exception(f"Error: On {func['name']} call, param {param_counter} dimensions are not the same as argument dimensions.")
+
+        for i, (param_dim, var_dim) in enumerate(zip(param_dims, var_dims)):
+            if param_dim != var_dim[0]:
+                raise Exception(f"Error: On {func['name']} call, param {param_counter} dim {i} is not the same as argument dim {i}")
+
+        # # Genera PARAM
+        self.quadruple_gen.add_quad_from_parser("PARAM", operand, None, f"par{param_counter + 1}")
+        self.quadruple_gen.params_stack[-1][1] += 1
+
     # Lista de argumentos (expresiones)
     def p_list_args_func(self, p):
         '''list_args_func : god_exp call_neuro_3 list_args_func_prima
-                     | empty'''
+                          | id_exp call_neuro_4 list_args_func_prima
+                          | empty'''
 
     # Añadir un argumento a la lista de argumentos
     def p_list_args_func_prima(self, p):
         '''list_args_func_prima : ',' god_exp call_neuro_3 list_args_func_prima
-                           | empty'''
+                                | ',' id_exp call_neuro_4 list_args_func_prima
+                                | empty'''
 
     # Ciclo for loop (C/C++ style)
     def p_for_loop(self, p):
@@ -543,14 +611,51 @@ class ParserTudi(object):
     # Asignación de una expresión a una variables:
     # - Se debe verificar que los tipos de datos coincidan
     def p_assignment(self, p):
-        '''assignment : id_exp ASSIGN_OP god_exp '''
+        '''assignment : id_exp ASSIGN_OP god_exp assign_neuro_1 
+                      | id_exp ASSIGN_OP id_exp assign_neuro_2
+                      | id_exp ASSIGN_OP call_func assign_neuro_2 '''
+
+    def p_assign_neuro_1(self, p):
+        '''assign_neuro_1 : '''
         t_type, operand = self.quadruple_gen.pop_operand()
         # Checar que id_exp sea del mismo tipo que la expresión
-        # id_exp: [name, type]
-        if p[1][1] != t_type:
-            print(f'Error: Cannot assign value of type \'{char_to_type[t_type]}\' to variable \'{p[1][0]}\' of type \'{char_to_type[p[1][1]]}\' at line {p.lineno(2)}.')
-            raise Exception(f'Error: Cannot assign value of type \'{char_to_type[t_type]}\' to variable \'{p[1][0]}\' of type \'{char_to_type[p[1][1]]}\' at line {p.lineno(2)}.')
-        self.quadruple_gen.add_assignment(p[1][0], operand)
+        # id_exp: [address, type, dims]
+        if p[-3][1] != t_type:
+            print(f'Error: Cannot assign value of type \'{char_to_type[t_type]}\' to variable \'{p[-3][0]}\' of type \'{char_to_type[p[-3][1]]}\'.')
+            raise Exception(f'Error: Cannot assign value of type \'{char_to_type[t_type]}\' to variable \'{p[-3][0]}\' of type \'{char_to_type[p[-3][1]]}\'.')
+
+        # Checar que sean de las mismas dimensiones
+        assign_dims = p[-3][2]
+        var_dims = []
+        if len(assign_dims) != len(var_dims):
+            raise Exception(f"Error: assignment operands do not have share the same dimensions.")
+        
+        self.quadruple_gen.add_assignment(p[-3][0], operand)
+
+    def p_assign_neuro_2(self, p):
+        '''assign_neuro_2 : '''
+        t_type, operand, var_dims = p[-1][1], p[-1][0], p[-1][2]
+        # Checar que id_exp sea del mismo tipo que la expresión
+        # id_exp: [address, type, dims]
+        if p[-3][1] != t_type:
+            print(f'Error: Cannot assign value of type \'{char_to_type[t_type]}\' to variable \'{p[-3][0]}\' of type \'{char_to_type[p[-3][1]]}\' at line {p.lineno(2)}.')
+            raise Exception(f'Error: Cannot assign value of type \'{char_to_type[t_type]}\' to variable \'{p[-3][0]}\' of type \'{char_to_type[p[-3][1]]}\' at line {p.lineno(2)}.')
+
+        # Checar que sean de las mismas dimensiones
+        assign_dims = p[-3][2]
+        if isinstance(var_dims, tuple):
+            var_dims = [[dim] for dim in var_dims]
+        if len(assign_dims) != len(var_dims):
+            raise Exception(f"Error: assignment operands do not have share the same dimensions.")
+            raise Exception(f"Error: In {self.last_vars['scope']}, return value does not have the same dimensions as the return type.")
+
+        length = 1
+        for i, (assign_dim, var_dim) in enumerate(zip(assign_dims, var_dims)):
+            if assign_dim[0] != var_dim[0]:
+                raise Exception(f"Error: assignment operands do not have share the same dimensions.")
+            length *= self.inverse_constant_table[assign_dim[0]]
+
+        self.quadruple_gen.add_assignment(p[-3][0], operand, max(length, 1))
 
     # Tipos de datos en TUDI:
     # - Pueden ser arreglos de 1 o 2 dimensiones
@@ -559,11 +664,6 @@ class ParserTudi(object):
                 | FLOAT type_dims
                 | BOOLEAN type_dims
                 | CHAR type_dims'''
-        # TODO: Implementar arreglos correctamente
-        # if p[2] is not None:
-        #     p[0] = "-".join([p[1], p[2]])
-        # else:
-        #     p[0] = p[1]
         p[0] = [p[1], p[2]]
 
     # En la declaración, los arreglos solamente
@@ -573,13 +673,20 @@ class ParserTudi(object):
                      | '[' int ',' int ']'
                      | empty'''
         if len(p) == 6:
-            if p[2][2] <= 0 or p[4][2] <= 0:
+            if p[2][3] <= 0 or p[4][3] <= 0:
                 raise Exception(f"Array dimensions must be greater than 0")
-            m0 = p[2][2] * p[4][2]
-            bound1 = self.virtual_mem.get_constant_address(p[2][2], 'I')
-            bound2 = self.virtual_mem.get_constant_address(p[4][2], 'I')
-            m1 = self.virtual_mem.get_constant_address(p[4][2], 'I')
+            m0 = p[2][3] * p[4][3]
+            bound1 = self.virtual_mem.get_constant_address(p[2][3], 'I')
+            self.inverse_constant_table[bound1] = p[2][3]
+
+            bound2 = self.virtual_mem.get_constant_address(p[4][3], 'I')
+            self.inverse_constant_table[bound2] = p[4][3]
+            
+            m1 = self.virtual_mem.get_constant_address(p[4][3], 'I')
+            self.inverse_constant_table[m1] = p[4][3]
+
             zero = self.virtual_mem.get_constant_address(0, 'I')
+            self.inverse_constant_table[zero] = 0
 
             # Limite superior 1 y m1
             dim1 = (bound1, m1)
@@ -588,16 +695,19 @@ class ParserTudi(object):
 
             p[0] = (m0, [dim1, dim2])
         elif len(p) == 4:
-            if p[2][2] <= 0:
+            if p[2][3] <= 0:
                 raise Exception(f"Array dimensions must be greater than 0")
-            bound1 = self.virtual_mem.get_constant_address(p[2][2], 'I')
+            bound1 = self.virtual_mem.get_constant_address(p[2][3], 'I')
+            self.inverse_constant_table[bound1] = p[2][3]
+
             zero = self.virtual_mem.get_constant_address(0, 'I')
+            self.inverse_constant_table[zero] = 0
 
             # Limite superior 1 y (-K)
             dim1 = (bound1, zero)
-            p[0] = (p[2][2], [dim1])
+            p[0] = (p[2][3], [dim1])
         else:
-            p[0] = (1, None)
+            p[0] = (1, [])
 
     # Expresión (lógica, relacional, aritmética)
     def p_god_exp(self, p):
@@ -688,19 +798,25 @@ class ParserTudi(object):
     def p_int(self, p):
         '''int : INT_LITERAL'''
         address = self.virtual_mem.get_constant_address(p[1], 'I')
-        p[0] = [address, 'I', p[1]]
+        self.inverse_constant_table[address] = p[1]
+
+        p[0] = [address, 'I', [], p[1]]
 
     # Flotantes
     def p_float(self, p):
         '''float : FLOAT_LITERAL'''
         address = self.virtual_mem.get_constant_address(p[1], 'F')
-        p[0] = [address, 'F', p[1]]
+        self.inverse_constant_table[address] = p[1]
+
+        p[0] = [address, 'F', [], p[1]]
 
     # Booleanos
     def p_bool(self, p):
         '''bool : BOOL_LITERAL'''
         address = self.virtual_mem.get_constant_address(p[1], 'B')
-        p[0] = [address, 'B', p[1]]
+        self.inverse_constant_table[address] = p[1]
+
+        p[0] = [address, 'B', [], p[1]]
 
     def p_seen_op(self, p):
         '''seen_op : '''
@@ -726,17 +842,17 @@ class ParserTudi(object):
                   | ID check_id '[' seen_fact_open god_exp seen_fact_close seen_dim2_1 ',' seen_fact_open god_exp ']' seen_fact_close  seen_dim2_2 '''
         if len(p) > 3:
             t_type, operand = self.quadruple_gen.pop_operand()
-            p[0] = [operand, t_type]
+            p[0] = [operand, t_type, []]
         else:
             var= p[2]
-            p[0] = [var['address'], type_to_char[var["type"]]]
+            p[0] = [var['address'], type_to_char[var["type"]], p[2]["dims"]]
 
     def p_check_id(self, p):
         '''check_id : '''
         # Checa si la variable fue declarada con anterioridad
         if not self.func_dir.find_variable(self.last_vars['scope'], p[-1]):
-            print(f'Error: Variable \'{p[-1]}\' at line {p.lineno(-1)} was not declared.')
-            raise Exception(f'Error: Variable \'{p[-1]}\' at line {p.lineno(-1)} was not declared.')
+            print(f'Error: Variable \'{p[-1]}\' at line was not declared.')
+            raise Exception(f'Error: Variable \'{p[-1]}\' at line was not declared.')
 
         p[0] = {"name": p[-1]} | self.func_dir.find_variable(self.last_vars['scope'], p[-1])
 
@@ -759,6 +875,8 @@ class ParserTudi(object):
         # Suma el operando a la dirección base y lo guarda en un temporal pointer
         temp_pointer = self.virtual_mem.get_new_temporal('P')
         dirBase = self.virtual_mem.get_constant_address(var["address"], 'I')
+        self.inverse_constant_table[dirBase] = var["address"]
+
         self.quadruple_gen.add_operand(type_to_char[var["type"]], temp_pointer)
         self.quadruple_gen.add_quad_from_parser('+', operand, dirBase, temp_pointer)
 
@@ -809,6 +927,8 @@ class ParserTudi(object):
         # Suma el operando a la dirección base y lo guarda en un temporal pointer
         temp_pointer = self.virtual_mem.get_new_temporal('P')
         dirBase = self.virtual_mem.get_constant_address(var["address"], 'I')
+        self.inverse_constant_table[dirBase] = var["address"]
+
         self.quadruple_gen.add_operand(type_to_char[var["type"]], temp_pointer)
         self.quadruple_gen.add_quad_from_parser('+', temp_int, dirBase, temp_pointer)
 
@@ -821,16 +941,16 @@ class ParserTudi(object):
         self.last_vars['scope'] = p[-3]
 
         if isinstance(p[-1], list):
-            return_type = p[-1][0]
-        else:
             return_type = p[-1]
+        else:
+            return_type = [p[-1], [0]]
         if not self.func_dir.add_function(self.last_vars['scope'], return_type, self.quadruple_gen.count_q):
             print(f'Error: Re-declaration of function \'{p[-3]}\'.')
             raise Exception(f'Error: Re-declaration of function \'{p[-3]}\'.')
 
         # Agrega como variable global el nombre de la función como lo visto en clase
-        if return_type != "void":
-            mem_address = self.virtual_mem.get_new_global(type_to_char[return_type], p[-1][1][0])
+        if return_type[0] != "void":
+            mem_address = self.virtual_mem.get_new_global(type_to_char[return_type[0]], p[-1][1][0])
             self.func_dir.add_return_address(self.last_vars['scope'], mem_address)
 
     def p_seen_param(self, p):
@@ -839,11 +959,9 @@ class ParserTudi(object):
         # la declaración de un parámetro.
         # p[-1] es la producción en la que aparece nombre del parámetro
         # p[-2] es la producción en la que aparece el tipo de dato
-        dims = p[-2][1][1]
-        if dims is not None:
-            raise Exception(f"Functions parameters cannot be arrays")
+        dims = p[-2][1]
 
-        mem_address = self.virtual_mem.get_new_local(type_to_char[p[-2][0]])
+        mem_address = self.virtual_mem.get_new_local(type_to_char[p[-2][0]], dims[0])
 
         if not self.func_dir.add_param(self.last_vars['scope'], p[-1], p[-2][0], mem_address, dims):
             print(f'Error: Re-declaration of function parameter \'{p[-1]}\'.')
@@ -866,6 +984,7 @@ class ParserTudi(object):
         self.quadruple_gen = QuadrupleGenerator()
         self.virtual_mem = VirtualMemory()
         self.verbose = verbose
+        self.inverse_constant_table = dict()
 
         # Built-in function with parametric polymorphism
         for func in ["int", "float", "bool"]:
@@ -887,4 +1006,4 @@ class ParserTudi(object):
         return self.func_dir
 
     def get_constant_table(self):
-        return {v.address: v.value for k, v in self.virtual_mem.constant_table.items()}
+        return self.inverse_constant_table
