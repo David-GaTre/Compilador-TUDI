@@ -851,8 +851,8 @@ class ParserTudi(object):
         '''check_id : '''
         # Checa si la variable fue declarada con anterioridad
         if not self.func_dir.find_variable(self.last_vars['scope'], p[-1]):
-            print(f'Error: Variable \'{p[-1]}\' at line was not declared.')
-            raise Exception(f'Error: Variable \'{p[-1]}\' at line was not declared.')
+            print(f'Error: Variable \'{p[-1]}\' was not declared.')
+            raise Exception(f'Error: Variable \'{p[-1]}\' was not declared.')
 
         p[0] = {"name": p[-1]} | self.func_dir.find_variable(self.last_vars['scope'], p[-1])
 
