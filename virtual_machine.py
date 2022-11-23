@@ -8,6 +8,15 @@ from lexer import LexerTudi
 from memory import GLOBAL_START, LOCAL_START, TEMP_START, TEMP_POINTER, CONST_START, CONST_LIMIT, Memory, FunctionMemory, get_type_by_address
 from parser_tudi import ParserTudi
 
+# Colors for the game
+game_colors = {
+    'BLACK': pygame.Color(0, 0, 0),
+    'WHITE': pygame.Color(255, 255, 255),
+    'RED': pygame.Color(255, 0, 0),
+    'GREEN': pygame.Color(0, 255, 0),
+    'BLUE': pygame.Color(0, 0, 255)
+}
+
 class VirtualMachine():
     def __init__(self, input, verbose=False) -> None:
         # Init lexer
@@ -237,6 +246,8 @@ class VirtualMachine():
             pygame.init()
             self.game_window = pygame.display.set_mode((self.window_x, self.window_y))
             pygame.display.set_caption(self.game_name)
+            self.font = pygame.font.SysFont('times new roman', 50)
+            self.fps = pygame.time.Clock()
         elif quadruple.operator == 'GAME_OVER':
             self.counter = len(self.quadruples) - 2
         elif quadruple.operator == 'END_PROGRAM':
@@ -246,6 +257,44 @@ class VirtualMachine():
         elif quadruple.operator == 'CANVAS':
             self.window_x = self.get_address_value(quadruple.left_operand)
             self.window_y = self.get_address_value(quadruple.right_operand)
+        elif quadruple.operator == 'WRITE_SCREEN':
+            temp_val = self.get_address_value(quadruple.temp)
+            surface = self.font.render('Score : ' + str(temp_val), True, "WHITE")
+            rect = surface.get_rect()
+            self.game_window.blit(surface, rect)
+        elif quadruple.operator == 'DRAW_RECT':
+            color = quadruple.temp[0].replace('"', '')
+            pos_x = self.get_address_value(quadruple.temp[1])
+            pos_y = self.get_address_value(quadruple.temp[2])
+            w = self.get_address_value(quadruple.temp[3])
+            h = self.get_address_value(quadruple.temp[4])
+
+            pygame.draw.rect(self.game_window, color, pygame.Rect(pos_x, pos_y, w, h)) 
+        elif quadruple.operator == 'SET_FILL':
+            self.game_window.fill(game_colors[quadruple.temp.replace('"', '')]) 
+        elif quadruple.operator == 'UPDATE_GAME':
+            pygame.display.update() 
+        elif quadruple.operator == 'TICK':
+            temp_val = self.get_address_value(quadruple.temp)
+            self.fps.tick( ) 
+        elif quadruple.operator == 'GET_EVENT':
+            temp_val = 0
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_UP:
+                        temp_val = 3
+                    if event.key == pygame.K_DOWN:
+                        temp_val = 1
+                    if event.key == pygame.K_LEFT:
+                        temp_val = 2
+                    if event.key == pygame.K_RIGHT:
+                        temp_val = 0 
+            self.set_address_value(quadruple.temp, temp_val)
+        elif quadruple.operator == 'RANDOM':
+            left = self.get_address_value(quadruple.left_operand)
+            right = self.get_address_value(quadruple.right_operand)
+            temp_val = random.randrange(left, right) 
+            self.set_address_value(quadruple.temp, temp_val)
         else:
             print("Not yet handled")
 
