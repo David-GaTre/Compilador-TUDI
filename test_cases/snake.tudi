@@ -2,7 +2,7 @@ game snake;
 canvas = 720, 480;
 
 declare {
-    int snake_speed, direction, change_to, score, event;
+    int snake_speed, direction, change_to, score, event, counter_body;
     int[2] snake_position;
     int[500, 2] snake_body;
     bool fruit_spawn;
@@ -38,6 +38,7 @@ func Start : void () {
     direction = 1;
     change_to = direction;
     score = 0;
+    counter_body = 0;
 
     init_game;
 }
@@ -78,18 +79,17 @@ func Update : void () {
         snake_position[0] = snake_position[0] + 10;
     }
 
-    snake_body[3,0] = snake_body[2,0];
-    snake_body[3,1] = snake_body[2,1];
-    snake_body[2,0] = snake_body[1,0];
-    snake_body[2,1] = snake_body[1,1];
-    snake_body[1,0] = snake_body[0,0];
-    snake_body[1,1] = snake_body[0,1];
+    for (i = 3+counter_body; i > 0; i = i - 1) {
+        snake_body[i,0] = snake_body[i-1,0];
+        snake_body[i,1] = snake_body[i-1,1];
+    }
     snake_body[0,0] = snake_position[0];
     snake_body[0,1] = snake_position[1];
 
     if (snake_position[0] == fruit_position[0] y snake_position[1] == fruit_position[1]) {
         score = score + 10;
         fruit_spawn = false;
+        counter_body = counter_body + 1;
     }
 
     if (no fruit_spawn) {
@@ -102,7 +102,7 @@ func Update : void () {
     fruit_spawn = true;
     set_fill("BLACK");
 
-    for (i = 0; i < 4; i = i + 1) {
+    for (i = 0; i < 4 + counter_body; i = i + 1) {
         draw_rect("GREEN", snake_body[i, 0], snake_body[i, 1], 10, 10);
     }
     draw_rect("WHITE", fruit_position[0], fruit_position[1], 10, 10);
@@ -115,7 +115,7 @@ func Update : void () {
         game_over;
     }
 
-    for (i = 1; i < 4; i = i + 1) {
+    for (i = 1; i < 4 + counter_body; i = i + 1) {
         if (snake_position[0] == snake_body[i, 0] y snake_position[1] == snake_body[i, 1]) {
             game_over;
         }
