@@ -28,10 +28,14 @@ func Start : void () {
     snake_body[3,1] = 50;
 
     fruit_spawn = true;
-    random(1, 720, fruit_position[0]);
-    random(1, 480, fruit_position[0]);
+    random(1, 72, fruit_position[0]);
+    random(1, 48, fruit_position[1]);
+    fruit_position[0] = fruit_position[0] * 10;
+    fruit_position[1] = fruit_position[1] * 10;
+    Print(fruit_position[0]);
+    Print(fruit_position[1]);
 
-    direction = 0;
+    direction = 1;
     change_to = direction;
     score = 0;
 
@@ -74,23 +78,25 @@ func Update : void () {
         snake_position[0] = snake_position[0] + 10;
     }
 
-    snake_body[0,0] = snake_position[0];
-    snake_body[0,1] = snake_position[1];
-    snake_body[1,0] = snake_body[0,0];
-    snake_body[1,1] = snake_body[0,1];
-    snake_body[2,0] = snake_body[1,0];
-    snake_body[2,1] = snake_body[1,1];
     snake_body[3,0] = snake_body[2,0];
     snake_body[3,1] = snake_body[2,1];
+    snake_body[2,0] = snake_body[1,0];
+    snake_body[2,1] = snake_body[1,1];
+    snake_body[1,0] = snake_body[0,0];
+    snake_body[1,1] = snake_body[0,1];
+    snake_body[0,0] = snake_position[0];
+    snake_body[0,1] = snake_position[1];
 
     if (snake_position[0] == fruit_position[0] y snake_position[1] == fruit_position[1]) {
         score = score + 10;
         fruit_spawn = false;
     }
 
-    if (fruit_spawn y true) {
-        random(1, 720, fruit_position[0]);
-        random(1, 480, fruit_position[0]);
+    if (no fruit_spawn) {
+        random(1, 72, fruit_position[0]);
+        random(1, 48, fruit_position[1]);
+        fruit_position[0] = fruit_position[0] * 10;
+        fruit_position[1] = fruit_position[1] * 10;
     }
 
     fruit_spawn = true;

@@ -302,7 +302,10 @@ class VirtualMachine():
             left = self.get_address_value(quadruple.left_operand)
             right = self.get_address_value(quadruple.right_operand)
             temp_val = random.randrange(left, right) 
-            self.set_address_value(quadruple.temp, temp_val)
+            quad_temp = quadruple.temp
+            if TEMP_POINTER <= quad_temp and quad_temp < CONST_START:
+                quad_temp = self.curr_func.get_value_by_address(quad_temp)
+            self.set_address_value(quad_temp, temp_val)
         else:
             print("Not yet handled")
 
