@@ -68,17 +68,24 @@ Características tales como lo son: *tipos de datos, entradas y salidas, variabl
 La estructura general de un programa escrito en TUDI es:
 
 ```
-/* Nombre del programa */
+/* Nombre del programa y tamaño de canvas */
 game <name>;
+canvas = 10, 10;
 
 /* Declarar variables globales */
 declare {
-    int x;
-    float [a, b, c];
+    float a, b, c;
+    int[5] vector;
+    int[5, 5] matriz;
 }
 
 /* Definir módulos */
 func DoSomethingA : int () {
+    declare {
+        int x;
+    }
+    x = 1;
+    return x;
 }
 
 /* Función Start */
